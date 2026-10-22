@@ -54,7 +54,10 @@ export function gasTierInsight(
       title: `Destekli gaz hakkının bitmesine ${d1(remaining)} m³ kaldı`,
       body: `Bu hızla ay sonunda ~${d0(fc.projected)} m³ kullanacaksın; hakkın ${d1(limit)} m³. ` +
         `1 m³ bile aşarsan devlet desteği o ay tamamen düşer ve faturan yaklaşık ${d0(penalty)} TL artar.`,
-      action: daysLeft > 0 ? `Hakkında kalmak için ay sonuna kadar günde en fazla ${d1(perDayBudget)} m³ kullan.` : undefined,
+      action: daysLeft <= 0 ? undefined
+        : fc.measured > 0 && perDayBudget < 0.4 * ((fc.projected - fc.measured) / Math.max(1, daysLeft))
+          ? `Hakkında kalmak için günde ${d1(perDayBudget)} m³'e inmen gerekir; bu, şu anki tüketiminin çok altında. Yine de kombiyi 1–2 °C düşürmek ve gece kısmak faturayı belirgin şekilde azaltır.`
+          : `Hakkında kalmak için ay sonuna kadar günde en fazla ${d1(perDayBudget)} m³ kullan.`,
       impactTL: r0(penalty),
     };
   }
@@ -172,13 +175,13 @@ export function checkBillAgainstReadings(readings: Reading[], type: UtilityType,
   const readM3 = (u.m3 / u.coveredDays) * u.daysInMonth;
   const diff = billM3 - readM3;
   const rel = readM3 > 0 ? Math.abs(diff) / readM3 : 1;
-  if (Math.abs(diff) < 2 || rel < 0.15) {
+  if (Math.abs(diff) < 3 || rel < 0.25) {
     return { status: 'ok', readM3, diffM3: diff, message: `Faturan okumalarınla uyumlu (okumalarına göre ~${d1(readM3)} m³).` };
   }
   if (diff > 0) {
     return {
       status: 'high', readM3, diffM3: diff,
-      message: `Faturadaki tüketim okumalarından ~${d1(diff)} m³ fazla. Faturada "tahmini okuma" ibaresi var mı, ilk ve son endeksler sayacınla uyuşuyor mu kontrol et; uyuşmuyorsa dağıtım şirketine itiraz edebilirsin.`,
+      message: `Faturadaki tüketim, okumalarına göre bu takvim ayı için beklenenden ~${d1(diff)} m³ fazla. Fatura dönemi ayın ortasından başlıyorsa fark normal olabilir. Faturadaki "ilk endeks" ve "son endeks"i sayacınla karşılaştır; son endeks sayacındaki değerden büyükse ya da "tahmini okuma" yazıyorsa dağıtım şirketine itiraz edebilirsin.`,
     };
   }
   return {

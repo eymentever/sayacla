@@ -1,9 +1,9 @@
-# Verim — App Store yayın paketi
+# Sayaçla — App Store yayın paketi
 
 ## 1. Kimlik
 | Alan | Değer |
 |---|---|
-| Uygulama adı (30) | Verim: Su ve Doğalgaz Takibi |
+| Uygulama adı (30) | Sayaçla: Su ve Doğalgaz |
 | Alt başlık (30) | Fatura tahmini, kademe uyarısı |
 | Bundle ID | com.tevertechnology.verim |
 | SKU | verim-ios-001 |
@@ -19,15 +19,15 @@ doğalgaz,kademe,botaş,su faturası,sayaç,igdaş,iski,aski,fatura hesapla,tasa
 ```
 
 ## 3. Tanıtım metni (170)
-Doğalgazda 1 m³ fazla tüketim ayın tamamını 2. kademeye taşıyabilir. Verim, ilinin BOTAŞ limitini takip eder ve aşmadan önce seni uyarır.
+Doğalgazda 1 m³ fazla tüketim ayın tamamını 2. kademeye taşıyabilir. Sayaçla, ilinin BOTAŞ limitini takip eder ve aşmadan önce seni uyarır.
 
 ## 4. Açıklama
 Su ve doğalgaz faturanı ödemeden önce bil.
 
-Verim, sayacını okuttuğun anda bu ayın tahmini faturasını, geçen aya göre farkı ve neyi değiştirirsen ayda kaç TL tasarruf edeceğini gösterir.
+Sayaçla, sayacını okuttuğun anda bu ayın tahmini faturasını, geçen aya göre farkı ve neyi değiştirirsen ayda kaç TL tasarruf edeceğini gösterir.
 
 DOĞALGAZ KADEME UYARISI
-4 Nisan 2026’dan beri doğalgazda il bazlı kademeli tarife uygulanıyor. Aylık limitini 1 m³ bile aşarsan o ayın tüm tüketimi 2. kademe fiyatından faturalanıyor. Verim 81 ilin 12 aylık BOTAŞ limitlerini bilir, ay sonu tüketimini tahmin eder ve “limitine 6 m³ kaldı, günde en fazla 0,8 m³ kullan” gibi net uyarılar verir.
+4 Nisan 2026’dan beri doğalgazda il bazlı kademeli tarife uygulanıyor. Aylık limitini 1 m³ bile aşarsan o ayın tüm tüketimi 2. kademe fiyatından faturalanıyor. Sayaçla 81 ilin 12 aylık BOTAŞ limitlerini bilir, ay sonu tüketimini tahmin eder ve “limitine 6 m³ kaldı, günde en fazla 0,8 m³ kullan” gibi net uyarılar verir.
 
 SAYACI OKUT, FATURAYI GÖR
 • Kamerayla okut — rakamlar cihaz üzerinde okunur, fotoğraf internete gitmez
@@ -64,7 +64,7 @@ Tahminler bilgilendirme amaçlıdır; kesin tutar dağıtım şirketinin / beled
 
 ## 7. Review notları (App Review Information)
 ```
-Verim requires no account. To test:
+Sayaçla requires no account. To test:
 1) Complete onboarding: pick any province (e.g. İstanbul / Kadıköy), keep defaults.
 2) On "Sayaç oku", choose "Elle gir" and enter 1000, tap Devam → Kaydet (baseline).
 3) Enter a second reading, e.g. 1012 → Kaydet. The Özet tab now shows the monthly bill

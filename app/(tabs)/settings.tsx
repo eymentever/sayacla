@@ -20,10 +20,10 @@ export default function Settings() {
 
   const exportData = async () => {
     const payload = JSON.stringify({
-      app: 'Verim', exportedAt: new Date().toISOString(),
+      app: 'Sayaçla', exportedAt: new Date().toISOString(),
       properties: st.properties, readings: st.readings.map(({ photoUri, ...r }) => r), bills: st.bills,
     }, null, 2);
-    await Share.share({ message: payload, title: 'Verim verileri' }).catch(() => {});
+    await Share.share({ message: payload, title: 'Sayaçla verileri' }).catch(() => {});
   };
 
   const wipe = () => Alert.alert('Tüm verileri sil', 'Evlerin, okumaların ve faturaların bu cihazdan kalıcı olarak silinir. Geri alınamaz.', [
@@ -86,7 +86,7 @@ export default function Settings() {
         <Divider />
         <View style={s.switchRow}>
           <View style={{ flex: 1 }}>
-            <Text style={s.switchTitle}>Doğalgaz kademe uyarıları</Text>
+            <Text style={s.switchTitle}>Doğalgaz destek hakkı uyarıları</Text>
             <T.Small>Limiti aşma riski olduğunda ayda en fazla bir kez bildirir.</T.Small>
           </View>
           <Switch value={st.settings.tierAlerts} trackColor={{ true: C.brand, false: C.border }}
@@ -98,7 +98,7 @@ export default function Settings() {
         <View style={s.switchRow}>
           <View style={{ flex: 1 }}>
             <Text style={s.switchTitle}>Kış sezonu haftalık kontrol</Text>
-            <T.Small>Ekim–Nisan her pazar hatırlatır; her ayın 1'inde yeni kademe limitini bildirir.</T.Small>
+            <T.Small>Ekim–Nisan her pazar hatırlatır; her ayın 1'inde yeni destekli hakkını bildirir.</T.Small>
           </View>
           <Switch value={st.settings.weeklyHeating} trackColor={{ true: C.brand, false: C.border }}
             onValueChange={async v => { if (v) await ensurePermission(); st.setSettings({ weeklyHeating: v }); }} />
@@ -119,13 +119,13 @@ export default function Settings() {
         <Divider />
         <Row icon={<Download size={18} color={C.textDim} />} label="Verilerimi dışa aktar" onPress={exportData} />
         <Divider />
-        <Row icon={<Mail size={18} color={C.textDim} />} label="Geri bildirim gönder" onPress={() => Linking.openURL('mailto:m.eymen@teverorman.com?subject=Verim%20geri%20bildirim')} />
+        <Row icon={<Mail size={18} color={C.textDim} />} label="Geri bildirim gönder" onPress={() => Linking.openURL('mailto:m.eymen@teverorman.com?subject=Sayaçla%20geri%20bildirim')} />
         <Divider />
         <Row icon={<Trash2 size={18} color={C.danger} />} label="Tüm verileri sil" onPress={wipe} />
       </Card>
 
       <T.Small style={{ textAlign: 'center', marginTop: SPACE.lg }}>
-        Verim {Constants.expoConfig?.version ?? ''} · Tever Technology{'\n'}Tahminler bilgilendirme amaçlıdır; kesin tutar faturandadır.
+        Sayaçla {Constants.expoConfig?.version ?? ''} · Tever Technology{'\n'}Tahminler bilgilendirme amaçlıdır; kesin tutar faturandadır.
       </T.Small>
 
       <Sheet visible={dayOpen} onClose={() => setDayOpen(false)} title="Hatırlatıcı günü">

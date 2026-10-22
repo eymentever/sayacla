@@ -24,8 +24,8 @@ export default function BillScreen() {
   const types: UtilityType[] = [prop?.hasGas ? 'gas' : null, prop?.hasWater ? 'water' : null].filter(Boolean) as UtilityType[];
   const [type, setType] = useState<UtilityType>((params.type as UtilityType) && types.includes(params.type as UtilityType) ? (params.type as UtilityType) : types[0] ?? 'water');
   const now = new Date();
-  const months = useMemo(() => Array.from({ length: 12 }, (_, i) => monthKey(new Date(now.getFullYear(), now.getMonth() - 1 - i, 15))), []);
-  const [month, setMonth] = useState(months[0]);
+  const months = useMemo(() => Array.from({ length: 13 }, (_, i) => monthKey(new Date(now.getFullYear(), now.getMonth() - i, 15))), []);
+  const [month, setMonth] = useState(months[1]);
   const [qty, setQty] = useState('');
   const [qtyUnit, setQtyUnit] = useState<'m3' | 'kwh'>('m3');
   const [amount, setAmount] = useState('');
@@ -54,12 +54,13 @@ export default function BillScreen() {
         <TouchableOpacity onPress={() => router.back()} hitSlop={12} accessibilityLabel="Kapat"><X size={24} color={C.textDim} /></TouchableOpacity>
       </View>
       <T.Body dim style={{ marginBottom: SPACE.lg }}>
-        Faturadaki tüketimi ve ödenecek tutarı gir. Verim bunu senin gerçek birim fiyatın olarak kullanır; belediye zamları ve dağıtım bedelleri otomatik hesaba girer.
+        Faturadaki tüketimi ve ödenecek tutarı gir. Sayaçla bunu senin gerçek birim fiyatın olarak kullanır; belediye zamları ve dağıtım bedelleri otomatik hesaba girer.
       </T.Body>
 
       {types.length > 1 && <Segmented value={type} onChange={t => { setType(t); setError(null); }} options={types.map(t => ({ value: t, label: typeLabel(t), color: typeColor(t) }))} />}
 
-      <Text style={s.label}>Fatura dönemi</Text>
+      <Text style={s.label}>Tüketimin ait olduğu ay</Text>
+      <T.Small style={{ marginBottom: 8 }}>Faturada "dönem" ya da "okuma tarihi" yazar; tüketimin çoğu hangi aya aitse onu seç.</T.Small>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: SPACE.lg }} contentContainerStyle={{ gap: 8 }}>
         {months.map(m => (
           <TouchableOpacity key={m} onPress={() => { tap(); setMonth(m); }} style={[s.chip, m === month && { borderColor: color, backgroundColor: color + '18' }]}>
@@ -93,12 +94,12 @@ export default function BillScreen() {
 
       {est && a ? (
         <Card>
-          <Row label="Verim tahmini (takvim ayı)" value={tl(est.total)} />
+          <Row label="Sayaçla tahmini (takvim ayı)" value={tl(est.total)} />
           <Row label="Senin faturan" value={tl(a)} bold />
           <Row label="Senin birim fiyatın" value={`${(a / m3v!).toFixed(2).replace('.', ',')} ₺/m³`} valueColor={color} />
           {est.gas ? (() => {
             const t = inferGasTier(bundle, prop.province, month, m3v!, a);
-            return <Row label="Faturan hangi kademeden?" value={`${t}. kademe`} valueColor={t === 2 ? C.danger : C.ok} />;
+            return <Row label="Faturan hangi fiyattan?" value={t === 1 ? 'Destekli fiyat' : 'Desteksiz fiyat'} valueColor={t === 2 ? C.danger : C.ok} />;
           })() : null}
         </Card>
       ) : null}

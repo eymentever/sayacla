@@ -183,6 +183,7 @@ test('fatura kontrolü: okumalardan belirgin fazlaysa uyarır, yakınsa onaylar'
   const rs = [R('2026-09-01T00:00:00', 500, 'water'), R('2026-10-01T00:00:00', 515, 'water')];
   assert.equal(checkBillAgainstReadings(rs, 'water', '2026-09', 15.5).status, 'ok');
   assert.equal(checkBillAgainstReadings(rs, 'water', '2026-09', 22).status, 'high');
+  assert.equal(checkBillAgainstReadings(rs, 'water', '2026-09', 17.5).status, 'ok', 'dönem farkı toleransı');
   assert.equal(checkBillAgainstReadings(rs, 'water', '2026-09', 9).status, 'low');
   assert.equal(checkBillAgainstReadings(rs, 'water', '2026-07', 9).status, 'unknown');
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, Linking, ActivityIndicator, Switch, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, Linking, ActivityIndicator, Switch, Dimensions, Alert } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
@@ -15,6 +15,7 @@ import { billFor } from '../../src/engine/bills';
 import { latestCalibration } from '../../src/engine/summary';
 import { readMeter, ocrAvailable } from '../../src/services/ocr';
 import { MeterGuide } from '../../src/ui/MeterGuide';
+import { scheduleMonthlyReminder, scheduleSecondReading } from '../../src/services/notify';
 import { MapPin } from 'lucide-react-native';
 import { Candidate } from '../../src/engine/ocrPick';
 import { tl, m3, num, dateTR } from '../../src/utils/format';
@@ -142,9 +143,20 @@ export default function Scan() {
       source: candidates && candidates.length ? 'ocr' : 'manual', meterReset: reset || undefined, photoUri: photo ?? undefined,
     });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    const firstEver = readings.filter(r => r.propertyId === prop.id).length === 0;
     setConfirm(null);
     clear();
     router.navigate('/');
+    if (firstEver) {
+      // Bağlamlı izin: ikinci okumayı hatırlatmak için
+      setTimeout(() => Alert.alert(
+        'İkinci okumayı hatırlatalım mı?',
+        'Tüketimini hesaplamak için birkaç gün sonra tekrar okuman gerekiyor. Ayrıca doğalgaz hakkın dolmak üzereyken seni uyarabiliriz.',
+        [{ text: 'Şimdi değil', style: 'cancel' }, { text: 'Hatırlat', onPress: () => {
+          scheduleMonthlyReminder(useVerim.getState().settings.reminderDay || 1, true).then(() => scheduleSecondReading()).catch(() => {});
+        } }],
+      ), 600);
+    }
   };
 
   return (
@@ -278,7 +290,7 @@ export default function Scan() {
                 {preview?.soFar && <Row label="Bu ay şu ana kadar" value={`${m3(preview.fc.measured)} · ${tl(preview.soFar.total)}`} />}
                 {preview?.projected && <Row label="Ay sonu tahmini" value={tl(preview.projected.total)} bold valueColor={color} />}
                 {preview?.projected?.gas && (
-                  <Row label="Doğalgaz kademesi" value={`${preview.projected.gas.tier}. kademe`} valueColor={preview.projected.gas.tier === 2 ? C.danger : C.ok} />
+                  <Row label="Doğalgaz fiyatı (ay sonu)" value={preview.projected.gas.tier === 1 ? 'Destekli' : 'Desteksiz — hak aşılıyor'} valueColor={preview.projected.gas.tier === 2 ? C.danger : C.ok} />
                 )}
                 {!last && <T.Small style={{ marginTop: SPACE.md }}>Bu ilk okuman. Birkaç gün sonra tekrar okuduğunda tüketim ve fatura tahmini başlar.</T.Small>}
               </>

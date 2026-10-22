@@ -82,7 +82,7 @@ export default function Dashboard() {
   return (
     <Screen>
       <Header
-        title={profile.name ? `Merhaba, ${profile.name}` : 'Verim'}
+        title={profile.name ? `Merhaba, ${profile.name}` : 'Sayaçla'}
         subtitle={`${d.prop.name} · ${d.prop.district ? d.prop.district + ', ' : ''}${d.prop.province}`}
         right={properties.length > 1 ? (
           <TouchableOpacity onPress={() => { tap(); setSwitcher(true); }} style={s.switchBtn} accessibilityLabel="Ev değiştir">
@@ -135,7 +135,7 @@ export default function Dashboard() {
           icon={<ScanLine size={18} color="#04140D" />} onPress={() => router.push('/scan')} style={{ marginTop: SPACE.lg }} />
       </Card>
 
-      {/* ── Verim ile korunan para ── */}
+      {/* ── Sayaçla ile korunan para ── */}
       {d.gas && d.prop.gasMode !== 'central' && (() => {
         const ps = protectedSavings(propReadings, warned[d.prop.id] ?? [], d.bundle, d.prop.province, now,
           latestCalibration(bills.filter(b => b.propertyId === d.prop.id), 'gas', d.bundle, d.prop.province));
@@ -145,7 +145,7 @@ export default function Dashboard() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.md }}>
               <Shield size={22} color={C.ok} />
               <View style={{ flex: 1 }}>
-                <T.Small>Verim ile korunan</T.Small>
+                <T.Small>Sayaçla ile korunan</T.Small>
                 <Text style={{ color: C.ok, fontSize: FONT['2xl'], fontWeight: '800' }}>{tl(ps.total)}</Text>
                 <T.Small>{ps.months.map(m => monthName(m.month, false)).join(', ')}: uyarıdan sonra destekli hakkında kaldın; desteksiz fiyat farkını ödemedin.</T.Small>
               </View>
@@ -325,7 +325,7 @@ function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
         <T.Body>Devlet, doğalgazı evlere maliyetinin altında satıyor; aradaki farkı kendisi karşılıyor.</T.Body>
         <T.Body style={{ marginTop: SPACE.md }}>4 Nisan 2026'dan beri bu destek yalnızca <Text style={{ fontWeight: '800' }}>ilindeki normal tüketime kadar</Text> veriliyor. Normal tüketim, ilinin son 5 yılda aynı ay ortalama bir evin kullandığının %75 fazlası olarak belirleniyor; kışın yükselir, yazın düşer.</T.Body>
         <T.Body style={{ marginTop: SPACE.md }}>Bu hakkı 1 m³ bile aşarsan o ay desteği <Text style={{ fontWeight: '800' }}>tamamen</Text> kaybedersin: ayın tüm gazı m³ başına yaklaşık {Math.round(gasPerM3(bundle, province, month, 1))} ₺ yerine {Math.round(gasPerM3(bundle, province, month, 2))} ₺'den faturalanır.</T.Body>
-        <T.Body style={{ marginTop: SPACE.md }}>Verim, ayın ortasında tüketim hızına bakıp ay sonunu tahmin eder ve aşmadan önce seni uyarır. Sonraki ay yine hakkında kalırsan destek geri gelir.</T.Body>
+        <T.Body style={{ marginTop: SPACE.md }}>Sayaçla, ayın ortasında tüketim hızına bakıp ay sonunu tahmin eder ve aşmadan önce seni uyarır. Sonraki ay yine hakkında kalırsan destek geri gelir.</T.Body>
         <T.Small style={{ marginTop: SPACE.md }}>Kaynak: BOTAŞ kademeli konut tarifesi (4 Nisan 2026). Şehit yakınları ve gaziler bu uygulamanın dışındadır.</T.Small>
       </Sheet>
     </Card>

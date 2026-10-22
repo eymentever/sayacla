@@ -1,4 +1,4 @@
-# Verim — Su & Doğalgaz Fatura Takibi
+# Sayaçla — Su & Doğalgaz Fatura Takibi
 
 Tever Technology. React Native (Expo SDK 54, Expo Router 6, TypeScript).
 

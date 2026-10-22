@@ -1,10 +1,10 @@
-# Verim — Gizlilik Politikası
+# Sayaçla — Gizlilik Politikası
 
 _Son güncelleme: 22 Ekim 2026_
 
 ## Kısaca
 
-Verim hesap açtırmaz, reklam göstermez ve seni tanımlayan hiçbir veri toplamaz. Girdiğin okumalar, faturalar ve ev bilgilerin yalnızca bu cihazda saklanır.
+Sayaçla hesap açtırmaz, reklam göstermez ve seni tanımlayan hiçbir veri toplamaz. Girdiğin okumalar, faturalar ve ev bilgilerin yalnızca bu cihazda saklanır.
 
 ## Cihazında saklananlar
 

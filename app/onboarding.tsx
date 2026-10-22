@@ -41,11 +41,11 @@ export default function Onboarding() {
 
       {step === 0 && (
         <View>
-          <Text style={s.brand}>Verim</Text>
+          <Text style={s.brand}>Sayaçla</Text>
           <Text style={s.hero}>Su ve doğalgaz faturanı{'\n'}ödemeden önce bil.</Text>
           <View style={{ gap: SPACE.md, marginTop: SPACE.xl }}>
-            <Feature icon={<Flame size={20} color={C.gas} />} title="Doğalgaz kademe uyarısı"
-              body="İlinin aylık BOTAŞ limitini takip eder; aşmadan önce seni uyarır. Limiti aşmak ayın tamamını pahalı kademeye taşır." />
+            <Feature icon={<Flame size={20} color={C.gas} />} title="Doğalgazda pahalı fiyata düşme uyarısı"
+              body="İlinin aylık destekli kullanım hakkını (BOTAŞ kademe limiti) takip eder ve aşmadan önce uyarır. Aşarsan ayın tüm gazı pahalı fiyattan faturalanır." />
             <Feature icon={<Droplet size={20} color={C.water} />} title="Sayacı okut, faturayı gör"
               body="Kamerayla okut ya da elle gir. İlinin tarifesiyle bu ayın tahmini faturasını hemen hesaplar." />
             <Feature icon={<TrendingDown size={20} color={C.brand} />} title="TL bazlı tasarruf önerileri"
@@ -60,7 +60,7 @@ export default function Onboarding() {
       {step === 1 && (
         <View>
           <T.Title style={s.q}>Nerede oturuyorsun?</T.Title>
-          <T.Body dim style={{ marginBottom: SPACE.xl }}>Tarife ve kademe limitleri il bazında değişir.</T.Body>
+          <T.Body dim style={{ marginBottom: SPACE.xl }}>Tarifeler ve doğalgaz destek hakları il bazında değişir.</T.Body>
           <Picker label="İl" value={province} options={ALL_PROVINCES}
             onChange={v => { setProvince(v); setDistrict(''); }} placeholder="İl seç" />
           {province ? (

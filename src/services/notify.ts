@@ -26,10 +26,12 @@ export async function setupChannels() {
 const REMINDER_ID = 'verim-monthly-reading';
 
 /** Her ayın `day`. günü 10:00'da hatırlatır. day=0 → iptal. */
-export async function scheduleMonthlyReminder(day: number) {
+export async function scheduleMonthlyReminder(day: number, ask = false) {
   await Notifications.cancelScheduledNotificationAsync(REMINDER_ID).catch(() => {});
   if (!day) return;
-  if (!(await ensurePermission())) return;
+  // Açılışta izin sorma; izin, ilk okuma kaydedilince bağlamıyla istenir
+  const granted = ask ? await ensurePermission() : (await Notifications.getPermissionsAsync()).granted;
+  if (!granted) return;
   await Notifications.scheduleNotificationAsync({
     identifier: REMINDER_ID,
     content: { title: 'Sayaç okuma zamanı', body: 'Su ve doğalgaz sayacını okut; bu ayın faturasını ve kademe durumunu gör.', data: { route: '/scan' } },
@@ -97,5 +99,17 @@ export async function scheduleTierFollowUp() {
     identifier: FOLLOWUP_ID,
     content: { title: 'Limitine yakınsın — tekrar oku', body: 'Son 3 günün tüketimine bakalım; 1. kademede kalıp kalmadığını hemen gör.', data: { route: '/scan' } },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3 * 86400, channelId: 'alerts' } as any,
+  });
+}
+
+const SECOND_ID = 'verim-second-reading';
+/** İlk okumadan 4 gün sonra tek seferlik "ikinci okumayı yap" hatırlatması */
+export async function scheduleSecondReading() {
+  await Notifications.cancelScheduledNotificationAsync(SECOND_ID).catch(() => {});
+  if (!(await Notifications.getPermissionsAsync()).granted) return;
+  await Notifications.scheduleNotificationAsync({
+    identifier: SECOND_ID,
+    content: { title: 'İkinci okuma zamanı', body: 'Sayacını tekrar okut; tüketimini, ay sonu faturanı ve doğalgaz hakkını hemen görelim.', data: { route: '/scan' } },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 4 * 86400, channelId: 'reminders' } as any,
   });
 }

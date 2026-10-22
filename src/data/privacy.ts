@@ -1,7 +1,7 @@
 // Gizlilik politikası metni — uygulama içi ekran ve docs/privacy.md aynı metni kullanır.
 export const PRIVACY_UPDATED = '22 Ekim 2026';
 export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
-  { h: 'Kısaca', p: 'Verim hesap açtırmaz, reklam göstermez ve seni tanımlayan hiçbir veri toplamaz. Girdiğin okumalar, faturalar ve ev bilgilerin yalnızca bu cihazda saklanır.' },
+  { h: 'Kısaca', p: 'Sayaçla hesap açtırmaz, reklam göstermez ve seni tanımlayan hiçbir veri toplamaz. Girdiğin okumalar, faturalar ve ev bilgilerin yalnızca bu cihazda saklanır.' },
   { h: 'Cihazında saklananlar', p: 'Ev bilgilerin (ad, il, ilçe), sayaç okumaların, girdiğin faturalar, hane kişi sayısı ve uygulama ayarların. Bu veriler cihazının uygulama alanında tutulur, Tever Technology dahil kimseye gönderilmez. Uygulamayı silmek veya Ayarlar > Tüm verileri sil ile kalıcı olarak silinir.' },
   { h: 'Kamera ve otomatik okuma', p: 'Kamera yalnızca sen sayaç fotoğrafı çektiğinde kullanılır. Rakamlar cihaz üzerinde Google ML Kit ile okunur; fotoğraf ve okunan rakamlar internete yüklenmez. ML Kit, Google’a kimliğe bağlı olmayan teşhis verisi gönderir: cihaz modeli ve işletim sistemi sürümü, uygulama sürümü, kuruluma özgü bir tanımlayıcı (kişiyi veya cihazı tanımlamak amacı taşımaz), performans ölçümleri ve hata kodları. Bu veriler yalnızca hizmetin çalışmasını ve kalitesini ölçmek için kullanılır; takip veya reklam amacıyla kullanılmaz.' },
   { h: 'Bildirimler', p: 'Okuma hatırlatıcısı ve kademe uyarıları cihaz içinde planlanan yerel bildirimlerdir; bildirim sunucusu kullanılmaz.' },
