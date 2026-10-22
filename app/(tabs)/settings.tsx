@@ -94,6 +94,17 @@ export default function Settings() {
         </View>
       </Card>
 
+      <Card style={{ paddingVertical: SPACE.sm, marginTop: -SPACE.sm }}>
+        <View style={s.switchRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.switchTitle}>Kış sezonu haftalık kontrol</Text>
+            <T.Small>Ekim–Nisan her pazar hatırlatır; her ayın 1'inde yeni kademe limitini bildirir.</T.Small>
+          </View>
+          <Switch value={st.settings.weeklyHeating} trackColor={{ true: C.brand, false: C.border }}
+            onValueChange={async v => { if (v) await ensurePermission(); st.setSettings({ weeklyHeating: v }); }} />
+        </View>
+      </Card>
+
       <T.Label style={s.section}>Acil durum</T.Label>
       <Card style={{ paddingVertical: SPACE.sm }}>
         <Row icon={<Phone size={18} color={C.danger} />} label="Doğalgaz acil — 187" onPress={() => Linking.openURL('tel:187')} />

@@ -11,10 +11,14 @@ import { useDashboard } from '../../src/hooks/useDashboard';
 import { useVerim, useTariffs } from '../../src/store/useVerim';
 import { TypeSummary, Tip, latestCalibration } from '../../src/engine/summary';
 import { Insight } from '../../src/engine/insights';
-import { gasLimit, billFor } from '../../src/engine/bills';
+import { gasLimit, billFor, gasBillRaw } from '../../src/engine/bills';
 import { monthKey } from '../../src/engine/consumption';
 import { tl, m3, pct, monthName, daysAgo } from '../../src/utils/format';
-import { notifyNow } from '../../src/services/notify';
+import { notifyNow, scheduleTierFollowUp, scheduleNextLimitNotice, syncWeeklyHeatingReminder } from '../../src/services/notify';
+import { protectedSavings } from '../../src/engine/insights';
+import { diagnose, compareToAverage, combinedGasPct } from '../../src/engine/diagnosis';
+import { Stethoscope, HelpCircle } from 'lucide-react-native';
+import { Shield } from 'lucide-react-native';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -24,6 +28,10 @@ export default function Dashboard() {
   const setActive = useVerim(s => s.setActiveProperty);
   const readings = useVerim(s => s.readings);
   const tierAlerts = useVerim(s => s.settings.tierAlerts);
+  const weeklyHeating = useVerim(s => s.settings.weeklyHeating);
+  const warned = useVerim(s => s.warned);
+  const markWarned = useVerim(s => s.markWarned);
+  const bills = useVerim(s => s.bills);
   const [switcher, setSwitcher] = useState(false);
   const [allTips, setAllTips] = useState(false);
 
@@ -32,6 +40,7 @@ export default function Dashboard() {
     if (!d || !tierAlerts) return;
     const ins = d.insights.find(i => i.id === 'gas-tier-risk' || i.id === 'gas-tier-exceeded');
     if (!ins) return;
+    if (ins.id === 'gas-tier-risk') { markWarned(d.prop.id, monthKey(new Date())); scheduleTierFollowUp().catch(() => {}); }
     const key = `verim-alert-${d.prop.id}-${monthKey(new Date())}-${ins.id}`;
     AsyncStorage.getItem(key).then(v => {
       if (v) return;
@@ -39,6 +48,16 @@ export default function Dashboard() {
       notifyNow(ins.title, ins.body, '/').catch(() => {});
     }).catch(() => {});
   }, [d?.insights, tierAlerts]);
+
+  // Isıtma sezonu: haftalık hatırlatıcı + gelecek ayın limit bildirimi
+  useEffect(() => {
+    if (!d?.gas || d.prop.gasMode === 'central') { syncWeeklyHeatingReminder(false).catch(() => {}); return; }
+    syncWeeklyHeatingReminder(weeklyHeating).catch(() => {});
+    if (!weeklyHeating) return;
+    const n = new Date();
+    const next = monthKey(new Date(n.getFullYear(), n.getMonth() + 1, 15));
+    scheduleNextLimitNotice(d.prop.province, gasLimit(d.bundle, d.prop.province, next), gasLimit(d.bundle, d.prop.province, monthKey(n)), monthName(next, false)).catch(() => {});
+  }, [d?.prop.id, d?.prop.province, weeklyHeating]);
 
   if (!d) return <Screen><Empty title="Mülk bulunamadı" body="Ayarlar'dan bir ev ekle." action={<Button title="Ev ekle" onPress={() => router.push('/property')} />} /></Screen>;
 
@@ -48,7 +67,17 @@ export default function Dashboard() {
   const propReadings = readings.filter(r => r.propertyId === d.prop.id);
   const delta = d.lastTotal != null ? d.totalProjected - d.lastTotal : null;
   const needsCalibration = [d.water?.projectedBill, d.gas?.projectedBill].some(b => b && b.confidence !== 'calibrated');
-  const visibleTips = allTips ? d.tips : d.tips.slice(0, 3);
+  // Öneriler: ev profili varsa kişisel teşhis, yoksa genel öneriler. Kademe/su dilimi önerileri her zaman.
+  const home = d.prop.home;
+  const causes = home ? diagnose(home, d.gas?.projectedBill?.total ?? 0, d.water?.projectedBill?.total ?? 0,
+    d.water?.forecast.projected ?? 0, profile.householdSize, now.getMonth()) : [];
+  const GENERIC = ['gas-1c', 'gas-night', 'gas-valves', 'gas-dhw', 'water-shower'];
+  const actions: Tip[] = [
+    ...d.tips.filter(t => !home || !GENERIC.includes(t.id)),
+    ...causes.map(c => ({ id: c.id, type: c.type, title: c.title, body: `${c.why} ${c.fix}`, monthlyTL: c.monthlyTL, effort: c.effort })),
+  ].sort((a, b) => b.monthlyTL - a.monthlyTL);
+  const visibleTips = allTips ? actions : actions.slice(0, 4);
+  const combined = home ? combinedGasPct(causes) : 0;
 
   return (
     <Screen>
@@ -84,15 +113,46 @@ export default function Dashboard() {
             </View>
           </>
         ) : (
-          <T.Body dim style={{ marginTop: 8 }}>
-            {propReadings.length === 0
-              ? 'İlk okumanı yap. İlk okuma başlangıç noktasıdır; ikinci okumadan itibaren tüketimini ve faturanı hesaplarız.'
-              : 'Başlangıç okuman kaydedildi. Birkaç gün sonra tekrar okut — tüketimin ve tahmini faturan burada belirecek.'}
-          </T.Body>
+          <View style={{ marginTop: SPACE.md, gap: 10 }}>
+            {[
+              { n: 1, t: 'Sayacını bul ve oku', d: 'Fotoğrafını çek ya da rakamları yaz. 30 saniye.', done: propReadings.length > 0 },
+              { n: 2, t: '3–7 gün sonra tekrar oku', d: 'Aradaki farktan günlük tüketimini buluruz.', done: false },
+              { n: 3, t: 'Faturanı önceden gör', d: 'Ay sonu tutarı, devlet desteği hakkın ve sana özel tasarruf yolları.', done: false },
+            ].map(x => (
+              <View key={x.n} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+                <View style={[s.stepNum, x.done && { backgroundColor: C.brand, borderColor: C.brand }]}>
+                  <Text style={[s.stepNumText, x.done && { color: '#04140D' }]}>{x.done ? '✓' : x.n}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.stepTitle}>{x.t}</Text>
+                  <T.Small>{x.d}</T.Small>
+                </View>
+              </View>
+            ))}
+          </View>
         )}
         <Button title={hasAny ? 'Sayacı oku' : propReadings.length ? 'İkinci okumayı yap' : 'İlk okumayı yap'}
           icon={<ScanLine size={18} color="#04140D" />} onPress={() => router.push('/scan')} style={{ marginTop: SPACE.lg }} />
       </Card>
+
+      {/* ── Verim ile korunan para ── */}
+      {d.gas && d.prop.gasMode !== 'central' && (() => {
+        const ps = protectedSavings(propReadings, warned[d.prop.id] ?? [], d.bundle, d.prop.province, now,
+          latestCalibration(bills.filter(b => b.propertyId === d.prop.id), 'gas', d.bundle, d.prop.province));
+        if (ps.total <= 0) return null;
+        return (
+          <Card accent={C.ok} style={{ backgroundColor: C.ok + '0D' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.md }}>
+              <Shield size={22} color={C.ok} />
+              <View style={{ flex: 1 }}>
+                <T.Small>Verim ile korunan</T.Small>
+                <Text style={{ color: C.ok, fontSize: FONT['2xl'], fontWeight: '800' }}>{tl(ps.total)}</Text>
+                <T.Small>{ps.months.map(m => monthName(m.month, false)).join(', ')}: uyarıdan sonra destekli hakkında kaldın; desteksiz fiyat farkını ödemedin.</T.Small>
+              </View>
+            </View>
+          </Card>
+        );
+      })()}
 
       {/* ── Uyarılar ── */}
       {d.insights.filter(i => i.level !== 'info').map(i => <InsightCard key={i.id} i={i} onLeak={() => router.push('/leak-test')} />)}
@@ -106,17 +166,30 @@ export default function Dashboard() {
         onScan={() => router.push({ pathname: '/scan', params: { type: 'water' } })} /> : null}
 
       {/* ── Ne yapmalısın ── */}
-      {d.tips.length > 0 && (
+      {hasAny && (
         <Card>
           <View style={s.tipsHead}>
             <Lightbulb size={18} color={C.brand} />
-            <T.Title style={{ flex: 1, marginLeft: 8 }}>Ne yapmalısın?</T.Title>
+            <T.Title style={{ flex: 1, marginLeft: 8 }}>Faturanı nasıl düşürürsün?</T.Title>
           </View>
-          <T.Small style={{ marginBottom: SPACE.sm }}>Kendi tüketimin ve {d.prop.province} tarifesiyle, aylık TL olarak. Öneriler birbiriyle örtüşebilir; toplanmaz.</T.Small>
-          {visibleTips.map(t => <TipRow key={t.id} t={t} />)}
-          {d.tips.length > 3 && (
-            <Button kind="ghost" title={allTips ? 'Daha az göster' : `Tüm öneriler (${d.tips.length})`} onPress={() => setAllTips(v => !v)} />
+          {home && combined > 0.05 && d.gas?.projectedBill ? (
+            <T.Body style={{ marginBottom: SPACE.sm }}>
+              Evinin cevaplarına göre doğalgazda ~%{Math.round(combined * 100)} tasarruf payın var — ayda yaklaşık {tl(d.gas.projectedBill.total * combined)}.
+            </T.Body>
+          ) : (
+            <T.Small style={{ marginBottom: SPACE.sm }}>Kendi tüketimin ve {d.prop.province} tarifesiyle, aylık TL olarak. Öneriler birbiriyle örtüşebilir; toplanmaz.</T.Small>
           )}
+          {visibleTips.map(t => <TipRow key={t.id} t={t} />)}
+          {actions.length > 4 && (
+            <Button kind="ghost" title={allTips ? 'Daha az göster' : `Tümü (${actions.length})`} onPress={() => setAllTips(v => !v)} />
+          )}
+          <TouchableOpacity onPress={() => { tap(); router.push('/diagnose'); }} style={s.diagRow} accessibilityRole="button">
+            <Stethoscope size={18} color={C.brand} />
+            <View style={{ flex: 1 }}>
+              <Text style={s.diagTitle}>{home ? 'Ev bilgilerini güncelle' : 'Neden fazla kullandığını bul (1 dk)'}</Text>
+              {!home ? <T.Small>11 kısa soru: kombi, sıcaklık, pencere, duş… Sana özel sıralı çözüm listesi.</T.Small> : null}
+            </View>
+          </TouchableOpacity>
         </Card>
       )}
 
@@ -165,6 +238,8 @@ const CONF = {
 function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
   s: TypeSummary; province: string; bundle: any; readings: { date: string; index: number }[]; info?: Insight; onScan: () => void;
 }) {
+  const [explain, setExplain] = useState(false);
+  const activeProp = useVerim(st => st.properties.find(p => p.id === st.activePropertyId));
   const color = typeColor(x.type);
   const Icon = x.type === 'water' ? Droplet : Flame;
   const last = [...readings].sort((a, b) => b.date.localeCompare(a.date))[0];
@@ -215,7 +290,10 @@ function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
           {limit != null && Number.isFinite(limit) && (
             <View style={{ marginTop: SPACE.lg }}>
               <View style={s.rowBetween}>
-                <T.Small>Kademe limiti ({monthName(month, false)}, {province})</T.Small>
+                <TouchableOpacity onPress={() => { tap(); setExplain(true); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }} accessibilityRole="button">
+                  <T.Small>Destekli kullanım hakkın ({monthName(month, false)})</T.Small>
+                  <HelpCircle size={14} color={C.textDim} />
+                </TouchableOpacity>
                 <T.Small color={x.forecast.measured > limit ? C.danger : C.text}>{m3(x.forecast.measured)} / {m3(limit)}</T.Small>
               </View>
               <View style={{ marginTop: 8 }}>
@@ -224,9 +302,13 @@ function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
                   marker={x.forecast.reliable ? Math.min(1, x.forecast.projected / limit) : undefined} />
               </View>
               {info ? <T.Small style={{ marginTop: 8 }}>{info.body}</T.Small> : null}
+              {x.forecast.reliable ? (() => {
+                const cmp = compareToAverage(x.forecast.projected, limit, province, activeProp?.home);
+                return cmp ? <T.Small color={cmp.ratio > 1.1 ? C.warn : C.textDim} style={{ marginTop: 8 }}>{cmp.sentence}</T.Small> : null;
+              })() : null}
               {b?.gas?.tier === 2 && x.forecast.measured <= limit ? (
                 <T.Small color={C.ok} style={{ marginTop: 8 }}>
-                  Limitte kalırsan bu ay ~{tl(billFor(bundle, 'gas', province, month, limit, cal).total)} ödersin (tahmine göre {tl(b.total - billFor(bundle, 'gas', province, month, limit, cal).total)} az).
+                  Hakkında kalırsan bu ay ~{tl(billFor(bundle, 'gas', province, month, limit, cal).total)} ödersin (tahmine göre {tl(b.total - billFor(bundle, 'gas', province, month, limit, cal).total)} az).
                 </T.Small>
               ) : null}
             </View>
@@ -239,8 +321,20 @@ function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
           <Text style={s.staleText}>Son okuma {daysAgo(last!.date)}. Doğru tahmin için şimdi oku.</Text>
         </TouchableOpacity>
       ) : null}
+      <Sheet visible={explain} onClose={() => setExplain(false)} title="Destekli kullanım hakkı nedir?">
+        <T.Body>Devlet, doğalgazı evlere maliyetinin altında satıyor; aradaki farkı kendisi karşılıyor.</T.Body>
+        <T.Body style={{ marginTop: SPACE.md }}>4 Nisan 2026'dan beri bu destek yalnızca <Text style={{ fontWeight: '800' }}>ilindeki normal tüketime kadar</Text> veriliyor. Normal tüketim, ilinin son 5 yılda aynı ay ortalama bir evin kullandığının %75 fazlası olarak belirleniyor; kışın yükselir, yazın düşer.</T.Body>
+        <T.Body style={{ marginTop: SPACE.md }}>Bu hakkı 1 m³ bile aşarsan o ay desteği <Text style={{ fontWeight: '800' }}>tamamen</Text> kaybedersin: ayın tüm gazı m³ başına yaklaşık {Math.round(gasPerM3(bundle, province, month, 1))} ₺ yerine {Math.round(gasPerM3(bundle, province, month, 2))} ₺'den faturalanır.</T.Body>
+        <T.Body style={{ marginTop: SPACE.md }}>Verim, ayın ortasında tüketim hızına bakıp ay sonunu tahmin eder ve aşmadan önce seni uyarır. Sonraki ay yine hakkında kalırsan destek geri gelir.</T.Body>
+        <T.Small style={{ marginTop: SPACE.md }}>Kaynak: BOTAŞ kademeli konut tarifesi (4 Nisan 2026). Şehit yakınları ve gaziler bu uygulamanın dışındadır.</T.Small>
+      </Sheet>
     </Card>
   );
+}
+
+/** Vergiler dahil m³ başı fiyat (kademe zorlanmış) */
+function gasPerM3(bundle: any, province: string, month: string, tier: 1 | 2) {
+  return gasBillRaw(bundle, province, month, 10, tier).total / 10;
 }
 
 function CentralGasCard({ province, propertyId, onAdd }: { province: string; propertyId: string; onAdd: () => void }) {
@@ -258,8 +352,8 @@ function CentralGasCard({ province, propertyId, onAdd }: { province: string; pro
         <View>
           <T.Body>{monthName(last.month)}: {m3(last.m3)} → {tl(last.amount)}</T.Body>
           <T.Small style={{ marginTop: 6 }}>
-            Merkezi sistemde kademe, bina tüketiminin daire sayısına bölünmesiyle hane başına uygulanır.
-            O ayın {province} limiti {m3(lim)}: {last.m3 > lim ? '2. kademeden faturalanmış olmalı.' : '1. kademede kalmışsın.'}
+            Merkezi sistemde destekli hak, bina tüketiminin daire sayısına bölünmesiyle hane başına uygulanır.
+            O ay {province} için destekli hakkın {m3(lim)}: {last.m3 > lim ? 'aşılmış — desteksiz fiyattan faturalanmış olmalı.' : 'hakkında kalmışsın.'}
           </T.Small>
         </View>
       ) : (
@@ -321,6 +415,11 @@ const s = StyleSheet.create({
   typeBig: { fontSize: FONT['2xl'], fontWeight: '800', marginVertical: 2 },
   typeLast: { color: C.text, fontSize: FONT.lg, fontWeight: '700', marginVertical: 2 },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between' },
+  stepNum: { width: 26, height: 26, borderRadius: 13, borderWidth: 1.5, borderColor: C.border, alignItems: 'center', justifyContent: 'center' },
+  stepNumText: { color: C.textDim, fontWeight: '800', fontSize: FONT.sm },
+  stepTitle: { color: C.text, fontSize: FONT.md, fontWeight: '700' },
+  diagRow: { flexDirection: 'row', alignItems: 'center', gap: SPACE.md, marginTop: SPACE.md, paddingTop: SPACE.md, borderTopWidth: 1, borderTopColor: C.divider, minHeight: 48 },
+  diagTitle: { color: C.brand, fontSize: FONT.md, fontWeight: '700' },
   stale: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: SPACE.md, paddingTop: SPACE.md, borderTopWidth: 1, borderTopColor: C.divider, minHeight: 44 },
   staleText: { color: C.warn, fontSize: FONT.sm, flex: 1 },
   insTitle: { fontSize: FONT.md, fontWeight: '800' },

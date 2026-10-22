@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Reading, UtilityType } from '../engine/types';
 import { PaidBill } from '../engine/summary';
 import { TariffBundle, DEFAULT_BUNDLE, mergeBundle } from '../engine/tariffs';
+import { HomeProfile } from '../engine/diagnosis';
 
 export interface Property {
   id: string;
@@ -17,6 +18,8 @@ export interface Property {
   hasGas: boolean;
   /** 'meter' → kendi gaz sayacı (kombi, kartlı dahil) · 'central' → merkezi sistem, yalnızca fatura girilir */
   gasMode?: 'meter' | 'central';
+  /** "Neden fazla kullanıyorum?" ev profili */
+  home?: HomeProfile;
 }
 
 export interface Profile {
@@ -30,6 +33,10 @@ export interface Settings {
   reminderDay: number;
   /** Gaz kademe uyarısı bildirimleri */
   tierAlerts: boolean;
+  /** Isıtma sezonunda haftalık okuma hatırlatıcısı + ayın 1'inde limit bildirimi */
+  weeklyHeating: boolean;
+  /** Sayaç rehberi gösterildi mi (tür başına) */
+  guideSeen?: { water?: boolean; gas?: boolean };
 }
 
 interface State {
@@ -40,6 +47,8 @@ interface State {
   readings: Reading[];
   bills: PaidBill[];
   settings: Settings;
+  /** Mülk başına kademe riski uyarısı verilen aylar ('YYYY-MM') — "korunan para" hesabı için */
+  warned: Record<string, string[]>;
   /** Uzak tarife paketi (null → gömülü paket) */
   remoteTariffs: Partial<TariffBundle> | null;
   tariffsFetchedAt: string | null;
@@ -55,6 +64,7 @@ interface State {
   addBill: (b: Omit<PaidBill, 'id'>) => void;
   removeBill: (id: string) => void;
   setSettings: (u: Partial<Settings>) => void;
+  markWarned: (propertyId: string, month: string) => void;
   setRemoteTariffs: (t: Partial<TariffBundle>) => void;
   resetAll: () => void;
 }
@@ -67,9 +77,10 @@ const INITIAL = {
   activePropertyId: null as string | null,
   readings: [] as Reading[],
   bills: [] as PaidBill[],
-  settings: { reminderDay: 1, tierAlerts: true },
+  settings: { reminderDay: 1, tierAlerts: true, weeklyHeating: true },
   remoteTariffs: null as Partial<TariffBundle> | null,
   tariffsFetchedAt: null as string | null,
+  warned: {} as Record<string, string[]>,
 };
 
 export const useVerim = create<State>()(
@@ -111,6 +122,10 @@ export const useVerim = create<State>()(
       })),
       removeBill: id => set(s => ({ bills: s.bills.filter(b => b.id !== id) })),
       setSettings: u => set(s => ({ settings: { ...s.settings, ...u } })),
+      markWarned: (pid, month) => set(s => {
+        const cur = s.warned[pid] ?? [];
+        return cur.includes(month) ? s : { warned: { ...s.warned, [pid]: [...cur, month] } };
+      }),
       setRemoteTariffs: t => set({ remoteTariffs: t, tariffsFetchedAt: new Date().toISOString() }),
       resetAll: () => set({ ...INITIAL }),
     }),
@@ -118,6 +133,11 @@ export const useVerim = create<State>()(
       name: 'verim-v2',
       version: 2,
       storage: createJSONStorage(() => AsyncStorage),
+      merge: (persisted: any, current) => ({
+        ...current, ...(persisted ?? {}),
+        settings: { ...current.settings, ...(persisted?.settings ?? {}) },
+        warned: persisted?.warned ?? {},
+      }),
       partialize: ({ hydrated, ...rest }) => rest as any,
       onRehydrateStorage: () => state => {
         migrateLegacy().finally(() => useVerim.setState({ hydrated: true }));

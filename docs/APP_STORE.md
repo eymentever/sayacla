@@ -55,12 +55,12 @@ Tahminler bilgilendirme amaçlıdır; kesin tutar dağıtım şirketinin / beled
 ## 5. URL’ler
 | Alan | Değer |
 |---|---|
-| Gizlilik politikası URL | https://eymentever.github.io/verim/privacy.html (GitHub Pages açılınca) — alternatif: https://github.com/eymentever/verim/blob/main/docs/privacy.md |
+| Gizlilik politikası URL | https://eymentever.github.io/verim/privacy.html (yayında) |
 | Destek URL | https://github.com/eymentever/verim/blob/main/docs/privacy.md (veya teverorman.com iletişim sayfası) |
 | Destek e-postası | m.eymen@teverorman.com |
 
 ## 6. App Privacy (Gizlilik etiketleri)
-**Data Not Collected** — uygulama hiçbir veri toplamaz. (Kamera görüntüsü cihazda işlenir, sunucuya gönderilmez; tarife dosyası indirirken kişisel veri gönderilmez.)
+**Kimliğe bağlı olmayan veriler (yayınlandı):** Device ID, Performance Data, Other Diagnostic Data — amaç Analytics, takip yok. Kaynak: Google ML Kit cihaz içi metin tanıma teşhis verisi (developers.google.com/ml-kit/ios-data-disclosure). Fotoğraf ve okumalar cihazdan çıkmaz.
 
 ## 7. Review notları (App Review Information)
 ```

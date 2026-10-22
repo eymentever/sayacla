@@ -88,11 +88,11 @@ export function summarize(
     if (Math.abs(dM3) >= 0.5) parts.push(`tüketim ${dM3 > 0 ? '+' : ''}${d1(dM3)} m³`);
     if (type === 'gas' && projectedBill.gas) {
       const lastTier = lastMonth.isActual ? inferGasTier(bundle, province, pm, lastMonth.m3, lastMonth.amount) : (lastMonth.m3 > gasLimit(bundle, province, pm) ? 2 : 1);
-      if (projectedBill.gas.tier !== lastTier) parts.push(projectedBill.gas.tier === 2 ? '2. kademeye geçiş' : '1. kademeye dönüş');
+      if (projectedBill.gas.tier !== lastTier) parts.push(projectedBill.gas.tier === 2 ? 'devlet desteğini kaybetme riski' : 'destekli fiyata dönüş');
     }
     if (type === 'gas') {
       const limNow = gasLimit(bundle, province, month), limPrev = gasLimit(bundle, province, pm);
-      if (Number.isFinite(limNow) && Math.abs(limNow - limPrev) > 1) parts.push(`kademe limiti ${d0(limPrev)} → ${d0(limNow)} m³`);
+      if (Number.isFinite(limNow) && Math.abs(limNow - limPrev) > 1) parts.push(`destekli hak ${d0(limPrev)} → ${d0(limNow)} m³`);
     }
     reason = parts.length ? parts.join(' · ') : 'tüketim geçen ayla aynı seviyede';
   }
@@ -137,8 +137,8 @@ export function savingsTips(
       const cut = gM3 - limit + 0.5;
       tips.push({
         id: 'gas-stay-k1', type: 'gas', effort: 'kolay',
-        title: `${d1(cut)} m³ az kullan, 1. kademede kal`,
-        body: `Ay sonu tahminin (${d1(gM3)} m³) ${d1(limit)} m³ limitini aşıyor. Limitte kalırsan ayın tamamı ucuz kademeden faturalanır.`,
+        title: `${d1(cut)} m³ az kullan, devlet desteğini kaybetme`,
+        body: `Ay sonu tahminin ${d1(gM3)} m³, destekli hakkın ${d1(limit)} m³. Hakkında kalırsan ayın tüm gazı destekli (ucuz) fiyattan faturalanır.`,
         monthlyTL: r0(savingOf(bundle, 'gas', province, month, gM3, cut, gCal)),
       });
     }
@@ -206,8 +206,8 @@ export function savingsTips(
       const cut = wM3 - edge.upTo;
       tips.push({
         id: 'water-tier', type: 'water', effort: 'orta',
-        title: `${d1(cut)} m³ az kullan, ucuz kademeye in`,
-        body: `${edge.upTo} m³ üstü daha pahalı kademeden faturalanıyor; ay sonu tahminin ${d1(wM3)} m³.`,
+        title: `${d1(cut)} m³ az kullan, ucuz fiyat dilimine in`,
+        body: `Belediye ${edge.upTo} m³ üstünü daha pahalı fiyatla faturalıyor; ay sonu tahminin ${d1(wM3)} m³.`,
         monthlyTL: r0(savingOf(bundle, 'water', province, month, wM3, cut, wCal)),
       });
     }

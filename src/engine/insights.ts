@@ -40,9 +40,9 @@ export function gasTierInsight(
   if (fc.measured > limit) {
     return {
       id: 'gas-tier-exceeded', type: 'gas', level: 'critical',
-      title: 'Doğalgaz 2. kademeye geçti',
-      body: `Bu ay ${d1(fc.measured)} m³ kullandın; ${province} limiti ${d1(limit)} m³. ` +
-        `Ayın tüm tüketimi 2. kademe fiyatından (${bundle.gas.national.k2} TL/Sm³) faturalanacak.`,
+      title: 'Doğalgazda devlet desteğini bu ay kaybettin',
+      body: `Bu ay ${d1(fc.measured)} m³ kullandın; ${province} için destekli kullanım hakkın ${d1(limit)} m³. ` +
+        `Hakkı aştığın için ayın tüm gazı desteksiz (pahalı) fiyattan faturalanacak.`,
       action: 'Bundan sonraki tüketim faturayı daha da büyütür; kombiyi 1–2 °C düşürmek etkili olur.',
       impactTL: r0(penalty),
     };
@@ -51,18 +51,18 @@ export function gasTierInsight(
     const perDayBudget = daysLeft > 0 ? remaining / daysLeft : 0;
     return {
       id: 'gas-tier-risk', type: 'gas', level: 'warning',
-      title: `Kademe limitine ${d1(remaining)} m³ kaldı`,
-      body: `Bu hızla ay sonunda ~${d0(fc.projected)} m³ olacak (limit ${d1(limit)} m³). ` +
-        `Limiti 1 m³ bile aşarsan faturan yaklaşık ${d0(penalty)} TL artar.`,
-      action: daysLeft > 0 ? `Limitte kalmak için günde en fazla ${d1(perDayBudget)} m³ kullan.` : undefined,
+      title: `Destekli gaz hakkının bitmesine ${d1(remaining)} m³ kaldı`,
+      body: `Bu hızla ay sonunda ~${d0(fc.projected)} m³ kullanacaksın; hakkın ${d1(limit)} m³. ` +
+        `1 m³ bile aşarsan devlet desteği o ay tamamen düşer ve faturan yaklaşık ${d0(penalty)} TL artar.`,
+      action: daysLeft > 0 ? `Hakkında kalmak için ay sonuna kadar günde en fazla ${d1(perDayBudget)} m³ kullan.` : undefined,
       impactTL: r0(penalty),
     };
   }
   if (fc.measured > 0) {
     return {
       id: 'gas-tier-ok', type: 'gas', level: 'info',
-      title: `1. kademedesin — ${d1(remaining)} m³ hakkın var`,
-      body: `${province} için bu ayın limiti ${d1(limit)} m³. Ay sonu tahmini ~${d0(fc.projected)} m³.`,
+      title: `Destekli fiyattasın — ${d1(remaining)} m³ hakkın var`,
+      body: `${province} için bu ayki destekli kullanım hakkın ${d1(limit)} m³. Ay sonu tahminin ~${d0(fc.projected)} m³.`,
     };
   }
   return null;
@@ -124,4 +124,65 @@ export function allInsights(
   ];
   const order: Record<Level, number> = { critical: 0, warning: 1, info: 2 };
   return (out.filter(Boolean) as Insight[]).sort((a, b) => order[a.level] - order[b.level]);
+}
+
+// ── Verim ile korunan para ───────────────────────────────────────────────────
+
+export interface ProtectedMonth { month: string; m3: number; limit: number; savedTL: number }
+
+/**
+ * Kademe riski için uyardığımız ve kullanıcının 1. kademede kapattığı geçmiş aylar.
+ * Korunan tutar = aynı tüketim 2. kademeden faturalansaydı ödenecek fark. Yalnızca ay en az 20 gün
+ * okumalarla kapsanmışsa sayılır (abartmamak için).
+ */
+export function protectedSavings(
+  readings: Reading[], warnedMonths: string[], bundle: TariffBundle, province: string, now = new Date(), cal?: Calibration,
+): { total: number; months: ProtectedMonth[] } {
+  const cur = monthKey(now);
+  const f = cal?.factor ?? 1;
+  const usage = monthlyUsage(buildIntervals(readings, 'gas'));
+  const months: ProtectedMonth[] = [];
+  for (const m of [...new Set(warnedMonths)]) {
+    if (m >= cur) continue;
+    const u = usage.find(x => x.month === m);
+    if (!u || u.coveredDays < 20) continue;
+    const m3 = (u.m3 / u.coveredDays) * u.daysInMonth;
+    const limit = gasLimit(bundle, province, m);
+    if (!Number.isFinite(limit) || m3 > limit) continue;
+    const saved = (gasBillRaw(bundle, province, m, m3, 2).total - gasBillRaw(bundle, province, m, m3, 1).total) * f;
+    months.push({ month: m, m3, limit, savedTL: Math.round(saved) });
+  }
+  months.sort((a, b) => a.month.localeCompare(b.month));
+  return { total: months.reduce((s, x) => s + x.savedTL, 0), months };
+}
+
+// ── Fatura kontrolü ──────────────────────────────────────────────────────────
+
+export interface BillCheck { status: 'ok' | 'high' | 'low' | 'unknown'; readM3?: number; diffM3?: number; message: string }
+
+/**
+ * Faturadaki tüketimi kullanıcının kendi okumalarıyla karşılaştırır. Fark %15 ve 2 m³'ü aşarsa uyarır —
+ * tahmini okuma veya hatalı endeks olabilir. m³ kıyaslanır; tarife farkından etkilenmez.
+ */
+export function checkBillAgainstReadings(readings: Reading[], type: UtilityType, month: string, billM3: number): BillCheck {
+  const u = monthlyUsage(buildIntervals(readings, type)).find(x => x.month === month);
+  if (!u || u.coveredDays < 20) {
+    return { status: 'unknown', message: 'Bu ayı okumalarla karşılaştırmak için ay boyunca en az iki okuma gerekiyor.' };
+  }
+  const readM3 = (u.m3 / u.coveredDays) * u.daysInMonth;
+  const diff = billM3 - readM3;
+  const rel = readM3 > 0 ? Math.abs(diff) / readM3 : 1;
+  if (Math.abs(diff) < 2 || rel < 0.15) {
+    return { status: 'ok', readM3, diffM3: diff, message: `Faturan okumalarınla uyumlu (okumalarına göre ~${d1(readM3)} m³).` };
+  }
+  if (diff > 0) {
+    return {
+      status: 'high', readM3, diffM3: diff,
+      message: `Faturadaki tüketim okumalarından ~${d1(diff)} m³ fazla. Faturada "tahmini okuma" ibaresi var mı, ilk ve son endeksler sayacınla uyuşuyor mu kontrol et; uyuşmuyorsa dağıtım şirketine itiraz edebilirsin.`,
+    };
+  }
+  return {
+    status: 'low', readM3, diffM3: diff,
+    message: `Faturadaki tüketim okumalarından ~${d1(-diff)} m³ az. Muhtemelen tahmini okuma yapıldı; fark sonraki faturaya eklenir.`,
+  };
 }

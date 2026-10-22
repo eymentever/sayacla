@@ -41,7 +41,7 @@ export function gasBill(
   const b = gasBillRaw(bundle, province, month, Math.max(0, m3));
   const f = cal?.factor ?? 1;
   const lines: BillLine[] = [
-    { label: `Gaz bedeli (${b.tier}. kademe, ${b.unit.toFixed(3)} TL/Sm³)`, amount: r2(b.energy * f) },
+    { label: `Gaz bedeli (${b.tier === 1 ? 'destekli' : 'desteksiz'} fiyat, ${b.unit.toFixed(3).replace('.', ',')} TL/Sm³)`, amount: r2(b.energy * f) },
     { label: 'Dağıtım (sistem kullanım) bedeli', amount: r2(b.dist * f) },
     { label: 'ÖTV', amount: r2(b.otv * f) },
     { label: 'KDV %20', amount: r2(b.kdv * f) },

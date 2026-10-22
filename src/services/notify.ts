@@ -49,3 +49,53 @@ export function onNotificationTap(cb: (route: string) => void) {
     if (typeof route === 'string') cb(route);
   });
 }
+
+const LIMIT_ID = 'verim-next-limit';
+const WEEKLY_ID = 'verim-weekly-heating';
+const FOLLOWUP_ID = 'verim-tier-followup';
+
+/** Gelecek ayın 1'inde, ilin yeni kademe limitini haber verir (her açılışta yeniden planlanır). */
+export async function scheduleNextLimitNotice(province: string, nextMonthLimit: number, prevLimit: number, monthName: string) {
+  await Notifications.cancelScheduledNotificationAsync(LIMIT_ID).catch(() => {});
+  if (!Number.isFinite(nextMonthLimit)) return;
+  const perm = await Notifications.getPermissionsAsync();
+  if (!perm.granted) return;
+  const now = new Date();
+  const date = new Date(now.getFullYear(), now.getMonth() + 1, 1, 10, 0, 0);
+  const up = nextMonthLimit > prevLimit;
+  await Notifications.scheduleNotificationAsync({
+    identifier: LIMIT_ID,
+    content: {
+      title: `${monthName} doğalgaz limitin: ${Math.round(nextMonthLimit)} m³`,
+      body: `${province} için limit ${Math.round(prevLimit)} → ${Math.round(nextMonthLimit)} m³ ${up ? 'yükseldi' : 'düştü'}. Ayın ilk okumasını yap, takibe başla.`,
+      data: { route: '/scan' },
+    },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date, channelId: 'reminders' } as any,
+  });
+}
+
+/** Isıtma sezonunda (Ekim–Nisan) her pazar 11:00 okuma hatırlatıcısı; sezon dışında iptal. */
+export async function syncWeeklyHeatingReminder(enabled: boolean) {
+  await Notifications.cancelScheduledNotificationAsync(WEEKLY_ID).catch(() => {});
+  const m = new Date().getMonth();
+  if (!enabled || !(m >= 9 || m <= 3)) return;
+  const perm = await Notifications.getPermissionsAsync();
+  if (!perm.granted) return;
+  await Notifications.scheduleNotificationAsync({
+    identifier: WEEKLY_ID,
+    content: { title: 'Haftalık kademe kontrolü', body: 'Doğalgaz sayacını okut: limitine ne kadar kaldığını ve ay sonu faturanı gör.', data: { route: '/scan' } },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: 1, hour: 11, minute: 0, channelId: 'reminders' } as any,
+  });
+}
+
+/** Kademe riski varsa 3 gün sonra tekrar okumayı hatırlatır. */
+export async function scheduleTierFollowUp() {
+  await Notifications.cancelScheduledNotificationAsync(FOLLOWUP_ID).catch(() => {});
+  const perm = await Notifications.getPermissionsAsync();
+  if (!perm.granted) return;
+  await Notifications.scheduleNotificationAsync({
+    identifier: FOLLOWUP_ID,
+    content: { title: 'Limitine yakınsın — tekrar oku', body: 'Son 3 günün tüketimine bakalım; 1. kademede kalıp kalmadığını hemen gör.', data: { route: '/scan' } },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3 * 86400, channelId: 'alerts' } as any,
+  });
+}

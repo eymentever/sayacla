@@ -43,6 +43,7 @@ export default function Root() {
             <Stack.Screen name="leak-test" options={{ presentation: 'modal' }} />
             <Stack.Screen name="property" options={{ presentation: 'modal' }} />
             <Stack.Screen name="tariff" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="diagnose" options={{ presentation: 'modal' }} />
           </Stack.Protected>
           <Stack.Protected guard={!onboarded}>
             <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />

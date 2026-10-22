@@ -8,6 +8,7 @@ import { Screen, T, Field, Button, Segmented, Card, Row, tap } from '../src/ui';
 import { useVerim, useActiveProperty, useTariffs } from '../src/store/useVerim';
 import { UtilityType } from '../src/engine/types';
 import { calibrate, billFor, inferGasTier } from '../src/engine/bills';
+import { checkBillAgainstReadings } from '../src/engine/insights';
 import { monthKey } from '../src/engine/consumption';
 import { parseMeterInput } from '../src/engine/validation';
 import { monthName, tl } from '../src/utils/format';
@@ -18,6 +19,7 @@ export default function BillScreen() {
   const prop = useActiveProperty();
   const bundle = useTariffs();
   const addBill = useVerim(s => s.addBill);
+  const readings = useVerim(s => s.readings);
 
   const types: UtilityType[] = [prop?.hasGas ? 'gas' : null, prop?.hasWater ? 'water' : null].filter(Boolean) as UtilityType[];
   const [type, setType] = useState<UtilityType>((params.type as UtilityType) && types.includes(params.type as UtilityType) ? (params.type as UtilityType) : types[0] ?? 'water');
@@ -76,6 +78,18 @@ export default function BillScreen() {
         hint={type === 'gas' && qtyUnit === 'kwh' && m3v ? `≈ ${m3v.toFixed(1).replace('.', ',')} m³ (1 Sm³ ≈ ${bundle.gas.national.kwhPerM3} kWh)` : undefined} />
       <Field label="Ödenecek tutar (KDV dahil)" value={amount} onChangeText={t => { setAmount(t); setError(null); }}
         keyboardType="decimal-pad" placeholder="1.250,40" suffix="₺" error={error ?? undefined} />
+
+      {m3v && m3v > 0 ? (() => {
+        const chk = checkBillAgainstReadings(readings.filter(r => r.propertyId === prop.id), type, month, m3v);
+        if (chk.status === 'unknown') return null;
+        const col = chk.status === 'ok' ? C.ok : chk.status === 'high' ? C.danger : C.warn;
+        return (
+          <Card accent={col} style={{ backgroundColor: col + '0D' }}>
+            <T.Label color={col}>Fatura kontrolü</T.Label>
+            <T.Body style={{ marginTop: 6 }}>{chk.message}</T.Body>
+          </Card>
+        );
+      })() : null}
 
       {est && a ? (
         <Card>

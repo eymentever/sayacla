@@ -131,7 +131,7 @@ test('özet: geçen ay gerçek fatura varsa onunla kıyaslar ve nedeni açıklar
   assert.ok(s.projectedBill && s.lastMonth?.isActual);
   assert.equal(s.lastMonth!.amount, 420);
   assert.ok(s.deltaTL! > 0);
-  assert.match(s.reason!, /2\. kademe/);
+  assert.match(s.reason!, /devlet desteğini/);
 });
 
 test('öneriler TL bazlı, büyükten küçüğe, kademe sınırı önerisi en üstte', () => {
@@ -166,4 +166,45 @@ test('gaz kalibrasyonu: 1. kademeden kesilmiş fatura, takvim ayı limiti aşıl
   assert.ok(c.ok && Math.abs(c.cal.factor - 1.05) < 1e-9, 'faktör yalnızca dağıtım/vergi farkını yansıtır');
   const k2 = gasBillRaw(B, 'İstanbul', '2026-09', 61, 2).total;
   assert.equal(inferGasTier(B, 'İstanbul', '2026-09', 61, k2), 2);
+});
+
+import { protectedSavings, checkBillAgainstReadings } from '../src/engine/insights';
+
+test('korunan para: uyarılan ve 1. kademede kapanan ay sayılır, aşılan ay sayılmaz', () => {
+  // İstanbul Eylül limiti 29.23: Eylül 28 m³ (altında), Ağustos 30 m³ (limit 26.72 üstü)
+  const rs = [R('2026-08-01T00:00:00', 1000), R('2026-09-01T00:00:00', 1030), R('2026-10-01T00:00:00', 1058)];
+  const p = protectedSavings(rs, ['2026-08', '2026-09'], B, 'İstanbul', new Date('2026-10-15T12:00:00'));
+  assert.equal(p.months.length, 1);
+  assert.equal(p.months[0].month, '2026-09');
+  assert.ok(p.total > 150, `${p.total}`);
+});
+
+test('fatura kontrolü: okumalardan belirgin fazlaysa uyarır, yakınsa onaylar', () => {
+  const rs = [R('2026-09-01T00:00:00', 500, 'water'), R('2026-10-01T00:00:00', 515, 'water')];
+  assert.equal(checkBillAgainstReadings(rs, 'water', '2026-09', 15.5).status, 'ok');
+  assert.equal(checkBillAgainstReadings(rs, 'water', '2026-09', 22).status, 'high');
+  assert.equal(checkBillAgainstReadings(rs, 'water', '2026-09', 9).status, 'low');
+  assert.equal(checkBillAgainstReadings(rs, 'water', '2026-07', 9).status, 'unknown');
+});
+
+import { compareToAverage, diagnose, combinedGasPct, HomeProfile } from '../src/engine/diagnosis';
+
+test('ortalamayla kıyas: limit = ortalama × 1,75; ev büyüklüğüyle ölçeklenir', () => {
+  const c = compareToAverage(43.73, 43.73, 'İstanbul');
+  assert.ok(c && Math.abs(c.ratio - 1.75) < 1e-9);
+  assert.match(c!.sentence, /%75 fazla/);
+  const home = { sizeM2: '120_180', position: 'middle' } as HomeProfile;
+  assert.ok(compareToAverage(43.73, 43.73, 'İstanbul', home)!.ratio < 1.75);
+});
+
+test('teşhis: sıcak ev + termostatsız + bakımsız → en büyük nedenler sıralı, birleşik oran makul', () => {
+  const home: HomeProfile = { sizeM2: '80_120', position: 'middle', boilerAge: 'gt10', boilerService: 'never', roomTemp: '23_24',
+    nightMode: 'same', roomThermostat: false, trvValves: false, windows: 'double_old', radiatorsCovered: true, showerMin: 'gt10' };
+  const cs = diagnose(home, 2000, 800, 18, 3, 10);
+  assert.ok(cs.length >= 6);
+  for (let i = 1; i < cs.length; i++) assert.ok(cs[i - 1].monthlyTL >= cs[i].monthlyTL);
+  const comb = combinedGasPct(cs);
+  assert.ok(comb > 0.3 && comb < 0.7, `${comb}`);
+  // Yaz ayında ısınma kaynaklı neden çıkmaz
+  assert.equal(diagnose(home, 400, 800, 18, 3, 6).filter(c => c.type === 'gas').length, 0);
 });

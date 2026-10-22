@@ -14,6 +14,8 @@ import { forecastMonth, sortReadings, monthKey } from '../../src/engine/consumpt
 import { billFor } from '../../src/engine/bills';
 import { latestCalibration } from '../../src/engine/summary';
 import { readMeter, ocrAvailable } from '../../src/services/ocr';
+import { MeterGuide } from '../../src/ui/MeterGuide';
+import { MapPin } from 'lucide-react-native';
 import { Candidate } from '../../src/engine/ocrPick';
 import { tl, m3, num, dateTR } from '../../src/utils/format';
 
@@ -34,6 +36,9 @@ export default function Scan() {
   const readings = useVerim(s => s.readings);
   const bills = useVerim(s => s.bills);
   const addReading = useVerim(s => s.addReading);
+  const guideSeen = useVerim(s => s.settings.guideSeen);
+  const setSettings = useVerim(s => s.setSettings);
+  const [guide, setGuide] = useState(false);
 
   const types = useMemo<UtilityType[]>(() => {
     const t: UtilityType[] = [];
@@ -64,6 +69,12 @@ export default function Scan() {
 
   const clear = () => { setPhoto(null); setCandidates(null); setInput(''); setReset(false); setWhen('now'); };
   useEffect(clear, [type, prop?.id]);
+  // İlk kez bu türü okuyan kullanıcıya rehberi göster
+  useEffect(() => {
+    if (!focused || !prop || types.length === 0) return;
+    if (!guideSeen?.[type] && readings.filter(r => r.propertyId === prop.id && r.type === type).length === 0) setGuide(true);
+  }, [focused, type, prop?.id]);
+  const closeGuide = () => { setGuide(false); setSettings({ guideSeen: { ...(guideSeen ?? {}), [type]: true } }); };
 
   // Onay ekranı önizlemesi: bu okumayla birlikte ay durumu
   const preview = useMemo(() => {
@@ -138,7 +149,10 @@ export default function Scan() {
 
   return (
     <Screen>
-      <Header title="Sayaç oku" subtitle={`${prop.name} · ${prop.province}`} />
+      <Header title="Sayaç oku" subtitle={`${prop.name} · ${prop.province}`}
+        right={<TouchableOpacity onPress={() => { tap(); setGuide(true); }} style={s.whereBtn} accessibilityRole="button">
+          <MapPin size={16} color={C.brand} /><Text style={s.whereText}>Sayacım nerede?</Text>
+        </TouchableOpacity>} />
       {types.length > 1 && (
         <Segmented value={type} onChange={setType}
           options={types.map(t => ({ value: t, label: typeLabel(t), color: typeColor(t) }))} />
@@ -241,6 +255,8 @@ export default function Scan() {
         </Card>
       )}
 
+      <MeterGuide kind={type} visible={guide} onClose={closeGuide} />
+
       <Sheet visible={!!confirm} onClose={() => setConfirm(null)} title={confirm?.check.severity === 'error' ? 'Kontrol et' : 'Okumayı onayla'}>
         {confirm && (
           <View>
@@ -280,6 +296,8 @@ export default function Scan() {
 }
 
 const s = StyleSheet.create({
+  whereBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: C.brand + '44', backgroundColor: C.brandDim },
+  whereText: { color: C.brand, fontWeight: '700', fontSize: FONT.sm },
   overlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', paddingBottom: 70 },
   vf: { width: VF.w - 40, height: VF.h, borderWidth: 2, borderRadius: RADIUS.md, backgroundColor: 'rgba(255,255,255,0.03)' },
   vfText: { color: '#fff', marginTop: 10, fontSize: FONT.sm, fontWeight: '700', textShadowColor: '#000', textShadowRadius: 4 },
