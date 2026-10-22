@@ -2,6 +2,7 @@
 
 import { Reading, UtilityType } from './types';
 import { sortReadings } from './consumption';
+import { d1, d0 } from './fmt';
 
 export type Severity = 'ok' | 'warning' | 'error';
 export interface Check {
@@ -50,7 +51,7 @@ export function validateNewReading(
   if (perDay > SPIKE[type]) {
     return {
       severity: 'warning', code: 'SPIKE',
-      message: `${days < 1 ? 'Kısa sürede' : `${Math.round(days)} günde`} ${fmt(diff)} m³ (günde ~${perDay.toFixed(1)} m³). ` +
+      message: `${days < 1 ? 'Kısa sürede' : `${Math.round(days)} günde`} ${fmt(diff)} m³ (günde ~${d1(perDay)} m³). ` +
         `Bu, normalin çok üstünde. Rakamı doğru okuduğundan emin ol; doğruysa kaçak olabilir.`,
     };
   }

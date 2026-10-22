@@ -16,3 +16,8 @@ expo-env.d.ts
 # @end expo-cli
 # Token iceren yerel script — asla push etme
 fix_git.ps1
+
+# Native klasörler (EAS prebuild üretir)
+ios/
+android/
+.env

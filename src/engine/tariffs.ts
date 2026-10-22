@@ -102,11 +102,9 @@ export const GAS_PROVINCES: Record<string, GasProvince> = Object.fromEntries(
 
 const tiers3 = (a: number, b: number, c: number, l1 = 15, l2 = 30): WaterTier[] =>
   [{ upTo: l1, rate: a }, { upTo: l2, rate: b }, { upTo: null, rate: c }];
-const tiers2 = (a: number, b: number, l1 = 15): WaterTier[] =>
-  [{ upTo: l1, rate: a }, { upTo: null, rate: b }];
 
 const W = (
-  authority: string, tiers: WaterTier[], fixedMonthly = 25,
+  authority: string, tiers: WaterTier[], fixedMonthly = 0,
   extra: Partial<WaterProvince> = {},
 ): WaterProvince => ({
   authority, tiers, fixedMonthly,
@@ -115,53 +113,60 @@ const W = (
   ...extra,
 });
 
-/** Büyükşehirler ve bilinen idareler. Listede olmayan il → NATIONAL_WATER_DEFAULT. */
+/** Tek fiyatlı (ortalama) tarife: 20 m³ hane tüketimine göre basında yayımlanan su+atıksu m³ fiyatı. */
+const flat = (rate: number): WaterTier[] => [{ upTo: null, rate }];
+const PRESS_0311 = 'Büyükşehir su fiyatları karşılaştırması, 20 m³ ortalama (mersinobjektif.com.tr, 11.03.2026)';
+
+/**
+ * Doğrulanmış / basında yayımlanmış tarifeler. Listede olmayan il → NATIONAL_WATER_DEFAULT (tahmini).
+ * Fiyatlar su + atıksu toplamı, KDV hariç (aksi belirtilmedikçe). Belediyeler aylık endeksleme
+ * yapabildiği için uygulama uzak tarife dosyasını ve kullanıcı faturası kalibrasyonunu önceliklendirir.
+ */
 const WATER_KNOWN: Record<string, WaterProvince> = {
-  'İstanbul':  W('İSKİ', tiers3(46.62, 71.04, 102.75), 27, {
-    freeM3: 0, source: 'İSKİ, 1 Haziran 2025 tarifesi (dunya.com 14.05.2025); sonrası aylık endeksli', asOf: '2025-06-01',
+  'Ankara': W('ASKİ', tiers3(58.13, 81.41, 105.24), 0, {
+    source: 'ASKİ resmi su tarifesi (aski.gov.tr/Yukle/Dosya/SuTarifesi.pdf), 05.10.2026', asOf: '2026-10-05', verified: true,
   }),
-  'Ankara':    W('ASKİ', tiers3(52.94, 80.5, 116.5), 22),
-  'İzmir':     W('İZSU', [{ upTo: 6, rate: 25 }, { upTo: 20, rate: 60 }, { upTo: 40, rate: 99.83 }, { upTo: null, rate: 145 }], 24),
-  'Bursa':     W('BUSKİ', tiers3(41, 62, 85, 10, 30)),
-  'Antalya':   W('ASAT', tiers3(38.5, 57, 78)),
-  'Kocaeli':   W('İSU', tiers3(43, 65, 88)),
-  'Sakarya':   W('SASKİ', tiers2(42.77, 60)),
-  'Eskişehir': W('ESKİ', tiers3(37, 55, 74)),
-  'Konya':     W('KOSKİ', tiers2(35, 52)),
-  'Gaziantep': W('GASKİ', tiers2(33, 50)),
-  'Adana':     W('ASKİ (Adana)', tiers2(34, 51)),
-  'Mersin':    W('MESKİ', tiers2(34.5, 51.5)),
-  'Kayseri':   W('KASKİ', tiers2(36, 54)),
-  'Trabzon':   W('TİSKİ', tiers2(32, 48)),
-  'Diyarbakır':W('DİSKİ', tiers2(30, 45)),
-  'Samsun':    W('SASKİ (Samsun)', tiers2(33.5, 50)),
-  'Hatay':     W('HATSU', tiers2(31, 46.5)),
-  'Manisa':    W('MASKİ', tiers2(36.5, 54.5)),
-  'Balıkesir': W('BASKİ', tiers2(35.5, 53)),
-  'Şanlıurfa': W('ŞUSKİ', tiers2(44.21, 66.3)),
-  'Aydın':     W('ASKİ (Aydın)', tiers2(38, 58)),
-  'Denizli':   W('DESKİ', tiers2(36, 55)),
-  'Tekirdağ':  W('TESKİ', tiers2(45, 68)),
-  'Muğla':     W('MUSKİ', tiers2(44, 67)),
-  'Mardin':    W('MARSU', tiers2(18, 28)),
-  'Kahramanmaraş': W('KASKİ (K.Maraş)', tiers2(30, 46)),
-  'Van':       W('VASKİ', tiers2(25, 38)),
-  'Malatya':   W('MASKİ (Malatya)', tiers2(32, 50)),
-  'Erzurum':   W('ESKİ (Erzurum)', tiers2(28, 42)),
-  'Ordu':      W('OSKİ', tiers2(30, 46)),
+  'İstanbul': W('İSKİ', tiers3(65.52, 99.83, 144.40), 0, {
+    freeM3: 3,
+    source: 'İSKİ Ekim 2026 konut birim fiyatları (03.10.2026; hesaplala.com derlemesi). İnsani su hakkı 3 m³', asOf: '2026-10-03', verified: true,
+  }),
+  'İzmir': W('İZSU', [
+    { upTo: 6, rate: 25 }, { upTo: 10, rate: 60 }, { upTo: 20, rate: 99.83 }, { upTo: 40, rate: 145 }, { upTo: null, rate: 201.9 },
+  ], 0, { source: 'İZSU 1 Haziran 2026 tarifesi (ekonomim.com, 19.05.2026)', asOf: '2026-06-01', verified: true }),
+  'Erzurum':       W('ESKİ (Erzurum)', flat(30.24), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Malatya':       W('MASKİ (Malatya)', flat(31.41), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Şanlıurfa':     W('ŞUSKİ', flat(38.29), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Kayseri':       W('KASKİ', flat(40.41), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Adana':         W('ASKİ (Adana)', flat(41.42), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Diyarbakır':    W('DİSKİ', flat(43.19), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Sakarya':       W('SASKİ', flat(44.29), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Eskişehir':     W('ESKİ', flat(45.38), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Antalya':       W('ASAT', flat(45.95), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Trabzon':       W('TİSKİ', flat(51.77), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Hatay':         W('HATSU', flat(53.89), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Konya':         W('KOSKİ', flat(56.30), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Kahramanmaraş': W('KASKİ (K.Maraş)', flat(68.36), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Kocaeli':       W('İSU', flat(70.23), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Gaziantep':     W('GASKİ', flat(72.56), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Mersin':        W('MESKİ', flat(76.31), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
 };
 
-export const NATIONAL_WATER_DEFAULT: WaterProvince = W('Belediye su idaresi', tiers2(35, 52), 22, {
+/** Doğrulanmış verisi olmayan iller: büyükşehir ortalamasına yakın tahmini; faturayla kalibrasyon şart. */
+export const NATIONAL_WATER_DEFAULT: WaterProvince = W('Belediye su idaresi', flat(50), 0, {
   ctvPerM3: 2.0,
-  source: 'Türkiye geneli ortalama — tahmini; faturanla kalibre et',
+  source: 'Tahmini (büyükşehir ortalamaları, Mart 2026). Doğru sonuç için faturanla kalibre et.',
+  asOf: '2026-03-11',
 });
+
+/** Büyükşehir belediyesi olan 30 il — ÇTV konut tarifesi daha yüksek (GİB 2026). */
+const METRO = ['Adana','Ankara','Antalya','Aydın','Balıkesir','Bursa','Denizli','Diyarbakır','Erzurum','Eskişehir','Gaziantep','Hatay','İstanbul','İzmir','Kahramanmaraş','Kayseri','Kocaeli','Konya','Malatya','Manisa','Mardin','Mersin','Muğla','Ordu','Sakarya','Samsun','Şanlıurfa','Tekirdağ','Trabzon','Van'];
 
 export const ALL_PROVINCES: string[] = Object.keys(GAS_LIMITS_2026).sort((a, b) => a.localeCompare(b, 'tr'));
 
 export const DEFAULT_BUNDLE: TariffBundle = {
   version: '2026.10-bundled',
   gas: { national: GAS_NATIONAL, provinces: GAS_PROVINCES },
-  water: Object.fromEntries(ALL_PROVINCES.map(il => [il, WATER_KNOWN[il] ?? { ...NATIONAL_WATER_DEFAULT }])),
+  water: Object.fromEntries(ALL_PROVINCES.map(il => [il, WATER_KNOWN[il] ?? { ...NATIONAL_WATER_DEFAULT, ctvPerM3: METRO.includes(il) ? 4.0 : 2.0 }])),
 };
 
 /** Uzak paketi varsayılanın üstüne güvenli biçimde birleştirir (eksik alanlar varsayılandan gelir). */

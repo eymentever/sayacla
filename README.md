@@ -1,88 +1,45 @@
-# Verim — Fatura & Sayaç Takip Uygulaması
+# Verim — Su & Doğalgaz Fatura Takibi
 
-React Native (Expo Router + TypeScript) ile geliştirilmiş, Türkiye'ye özgü su ve doğalgaz sayaç takip uygulaması.
+Tever Technology. React Native (Expo SDK 54, Expo Router 6, TypeScript).
 
----
+Sayacı okut → bu ayın tahmini faturası, geçen ayla fark, doğalgaz kademe durumu ve TL bazlı tasarruf önerileri.
 
-## Proje Yapısı
-
+## Mimari
 ```
-verim/
-├── app/
-│   ├── index.tsx          # Ana dashboard (dark premium UI)
-│   ├── scan.tsx           # OCR sayaç tarayıcı
-│   ├── analytics.tsx      # SVG grafikler & tarife yönetimi
-│   └── _layout.tsx        # Expo Router layout
-├── src/
-│   ├── components/        # Yeniden kullanılabilir UI bileşenleri
-│   ├── store/
-│   │   └── useUtilityStore.ts   # Zustand + AsyncStorage
-│   ├── services/
-│   │   └── ocrService.ts        # OCR simülasyonu / gerçek entegrasyon
-│   └── hooks/                   # Özel state observer hook'ları
-├── package.json
-└── tsconfig.json
+app/                     Ekranlar (Expo Router)
+  (tabs)/index.tsx       Özet: tahmini fatura, kıyas, kademe, uyarılar, öneriler
+  (tabs)/scan.tsx        Kamera (ML Kit OCR) + elle giriş + doğrulama
+  (tabs)/history.tsx     12 aylık grafik, aylar, faturalar, okumalar
+  (tabs)/settings.tsx    Evler, hane, doğruluk, bildirimler, acil, veri
+  onboarding / bill / leak-test / property / tariff / privacy
+src/engine/              Saf hesap motoru (React'siz, test edilir)
+  consumption.ts         Okumalar → dönemler → takvim ayına gün bazlı dağıtım, tahmin
+  tariffs.ts             81 il tarife modeli (kaynak + tarih + doğrulandı bayrağı), uzak birleştirme
+  bills.ts               Gaz (BOTAŞ kademe, tüm ay kuralı) + su faturası, kalibrasyon
+  insights.ts            Kademe uyarısı, anomali, kaçak testi
+  summary.ts             Özet, geçen ay kıyası, kişisel TL önerileri
+  validation.ts          Okuma doğrulama + Türkçe sayı ayrıştırma
+  ocrPick.ts             OCR çıktısından sayaç endeksini seçme
+src/data/                BOTAŞ 2026 limitleri (81 il × 12 ay), 81 il / 973 ilçe, gizlilik metni
+src/store/useVerim.ts    Zustand + AsyncStorage — sadece ham veri (okuma, fatura, ev)
+tariffs/tariffs.json     Uzak tarife paketi (uygulama günlük çeker)
+docs/                    Gizlilik politikası, App Store paketi ve ekran görüntüleri
+tests/                   Motor birim testleri
 ```
 
----
+**İlke:** Tüketim ve tutar saklanmaz, her zaman okumalardan türetilir. Tarife güncellenince geçmiş de doğru hesaplanır.
 
-## Kurulum
-
+## Komutlar
 ```bash
-npx create-expo-app verim --template blank-typescript
-cd verim
-
-# Bağımlılıkları yükle
-npx expo install expo-router react-native-svg
-npm install zustand @react-native-async-storage/async-storage
-
-# Geliştirme sunucusunu başlat
-npx expo start
+npm install
+npm test                 # motor testleri
+npx tsc --noEmit         # tip kontrolü (0 hata)
+npx expo start           # Expo Go (OCR hariç her şey)
+eas build -p ios --profile development   # OCR dahil test derlemesi
 ```
 
----
+## Veri kaynakları
+- Doğalgaz: BOTAŞ konut tarifesi 4 Nisan 2026 (1. kademe 10,625 / 2. kademe 18,00 TL/Sm³), il bazlı aylık limitler; KDV %20, ÖTV 0,1468 TL/Sm³.
+- Su: ASKİ 05.10.2026 resmi tarife, İSKİ Ekim 2026, İZSU Haziran 2026; diğer büyükşehirler Mart 2026 basın karşılaştırması; geri kalanlar tahmini → faturayla kalibrasyon.
 
-## Temel Özellikler
-
-- **Dark Premium Dashboard** — aylık toplam, ay sonu tahmini, kaçak uyarısı
-- **Sayaç Tarayıcı** — animasyonlu viewfinder, OCR sonuç doğrulama modalı
-- **Analitik** — 6 aylık SVG bar grafiği, şehir bazlı tarife yönetimi
-- **Kalıcı Depolama** — Zustand + AsyncStorage ile cihaz üzerinde veri saklama
-- **Çoklu Şehir Tarifeleri** — İstanbul, Ankara, İzmir (2026 tarifeleri)
-
----
-
-## Yol Haritası
-
-### Faz 1 — OCR Entegrasyonu
-- [ ] Google ML Kit (on-device) ile gerçek OCR
-- [ ] Tesseract.js web fallback
-- [ ] Sayaç tipine göre model optimizasyonu (7-segment display)
-
-### Faz 2 — Gelişmiş Analitik
-- [ ] Yıllık karşılaştırma grafikleri
-- [ ] Tüketim anomali tespiti (ML tabanlı)
-- [ ] PDF fatura ihracatı
-
-### Faz 3 — Entegrasyonlar
-- [ ] TEDAŞ / İGDAŞ API bağlantısı
-- [ ] Push notification — fatura son ödeme hatırlatıcısı
-- [ ] Widget (iOS/Android) — güncel tüketim özeti
-
-### Faz 4 — Sosyal & Gamification
-- [ ] Mahalle bazlı tüketim karşılaştırması
-- [ ] Tasarruf rozeti sistemi
-- [ ] Aile hesabı paylaşımı
-
----
-
-## Teknoloji Yığını
-
-| Katman | Teknoloji |
-|--------|-----------|
-| Framework | Expo SDK 52 + Expo Router v4 |
-| Dil | TypeScript 5 |
-| State | Zustand 4 + AsyncStorage |
-| Grafik | react-native-svg |
-| OCR (mock) | simulateOCR → Google ML Kit (planlı) |
-| Navigasyon | Expo Router (file-based) |
+Yayın adımları: [docs/APP_STORE.md](docs/APP_STORE.md)

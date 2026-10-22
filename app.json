@@ -7,23 +7,59 @@
     "scheme": "verim",
     "userInterfaceStyle": "dark",
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.tevertechnology.verim",
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "infoPlist": {
-        "NSCameraUsageDescription": "Sayacınızı kamerayla okuyabilmek için kamera izni gereklidir."
+        "NSCameraUsageDescription": "Sayacının fotoğrafını çekip rakamları cihaz üzerinde okumak için kamerayı kullanır. Fotoğraf cihazından çıkmaz.",
+        "CFBundleDevelopmentRegion": "tr",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "privacyManifests": {
+        "NSPrivacyTracking": false,
+        "NSPrivacyTrackingDomains": [],
+        "NSPrivacyCollectedDataTypes": [],
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "C617.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "35F9.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "E174.1"
+            ]
+          }
+        ]
       }
     },
     "android": {
       "package": "com.tevertechnology.verim",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#070A13"
+        "backgroundColor": "#070A12"
       },
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.POST_NOTIFICATIONS",
-        "android.permission.RECEIVE_BOOT_COMPLETED",
-        "android.permission.VIBRATE"
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "web": {
@@ -36,7 +72,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Sayacınızı kamerayla okuyabilmek için kamera izni gereklidir.",
+          "cameraPermission": "Sayacının fotoğrafını çekip rakamları cihaz üzerinde okumak için kamerayı kullanır. Fotoğraf cihazından çıkmaz.",
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
@@ -45,13 +81,40 @@
         "expo-notifications",
         {
           "icon": "./assets/images/notification-icon.png",
-          "color": "#00FF9D",
-          "sounds": []
+          "color": "#00E59B"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#070A12"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "15.5"
+          }
         }
       ]
     ],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": false
+    },
+    "icon": "./assets/images/icon.png",
+    "backgroundColor": "#070A12",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#070A12"
+    },
+    "extra": {
+      "router": {},
+      "eas": {}
     }
   }
 }

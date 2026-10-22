@@ -58,9 +58,12 @@ test('su kademeleri doğru sınırda geçer', () => {
   const w = B.water['İstanbul'];
   const t15 = waterBillRaw(w, 15).tariff;
   const t16 = waterBillRaw(w, 16).tariff;
-  assert.ok(Math.abs(t15 - 15 * 46.62) < 1e-6);
-  assert.ok(Math.abs(t16 - t15 - 71.04) < 1e-6);
-  assert.ok(waterBill(B, 'İstanbul', '2026-10', 0).total > 0, 'sabit bedel 0 m³ te de var');
+  // İnsani su hakkı: 15 m³ → %20 = 3 m³ ücretsiz; kademe sınırı gerçek tüketimde kalır
+  assert.ok(Math.abs(t15 - 12 * 65.52) < 1e-6, `${t15}`);
+  assert.ok(Math.abs(t16 - t15 - 99.83) < 1e-6, `${t16 - t15}`);
+  assert.ok(Math.abs(waterBillRaw(w, 5).tariff - 4 * 65.52) < 1e-6, '5 m³ → 1 m³ ücretsiz');
+  const a30 = waterBillRaw(B.water['Ankara'], 30).tariff, a31 = waterBillRaw(B.water['Ankara'], 31).tariff;
+  assert.ok(Math.abs(a31 - a30 - 105.24) < 1e-6);
 });
 
 test('kalibrasyon gerçek faturayı birebir verir, saçma girişi reddeder', () => {
@@ -117,4 +120,50 @@ test('kaçak testi litre hesabı', () => {
 test('gaz anomalisi geçen yıl yoksa üretilmez (mevsimsel yanılgı yok)', () => {
   const rs = [R('2026-07-01T00:00:00', 0), R('2026-08-01T00:00:00', 20), R('2026-09-01T00:00:00', 40), R('2026-10-01T00:00:00', 60), R('2026-11-01T00:00:00', 200)];
   assert.equal(anomalyInsight(rs, 'gas'), null);
+});
+
+import { summarize, savingsTips } from '../src/engine/summary';
+
+test('özet: geçen ay gerçek fatura varsa onunla kıyaslar ve nedeni açıklar', () => {
+  const rs = [R('2026-10-01T00:00:00', 1000), R('2026-10-15T00:00:00', 1028)];
+  const bills = [{ id: 'b', propertyId: 'p', type: 'gas' as const, month: '2026-09', m3: 25, amount: 420 }];
+  const s = summarize(rs, bills, 'gas', B, 'İstanbul', new Date('2026-10-15T12:00:00'));
+  assert.ok(s.projectedBill && s.lastMonth?.isActual);
+  assert.equal(s.lastMonth!.amount, 420);
+  assert.ok(s.deltaTL! > 0);
+  assert.match(s.reason!, /2\. kademe/);
+});
+
+test('öneriler TL bazlı, büyükten küçüğe, kademe sınırı önerisi en üstte', () => {
+  const rs = [R('2026-10-01T00:00:00', 1000), R('2026-10-15T00:00:00', 1022), R('2026-10-01T00:00:00', 500, 'water'), R('2026-10-15T00:00:00', 510, 'water')];
+  const tips = savingsTips(rs, [], B, 'İstanbul', 3, new Date('2026-10-15T12:00:00'));
+  assert.ok(tips.length >= 3);
+  assert.equal(tips[0].id, 'gas-stay-k1');
+  for (let i = 1; i < tips.length; i++) assert.ok(tips[i - 1].monthlyTL >= tips[i].monthlyTL);
+});
+
+import { pickMeterReading } from '../src/engine/ocrPick';
+
+test('OCR: iri sayaç rakamını seçer, seri no ve birimleri eler, son okumaya yakın olanı öne alır', () => {
+  const lines = [
+    { text: 'G4 Qmax 6 m3/h 2019', height: 12 },
+    { text: 'No 12345678901', height: 10 },
+    { text: '0 4 3 8 1 7 , 0 5', height: 60 },
+    { text: 'm³', height: 20 },
+  ];
+  const c = pickMeterReading(lines, 43790);
+  assert.equal(c[0].value, 43817.05);
+  const c2 = pickMeterReading([{ text: '01234', height: 50 }, { text: '04382', height: 48 }], 4370);
+  assert.equal(c2[0].value, 4382);
+});
+
+import { inferGasTier } from '../src/engine/bills';
+
+test('gaz kalibrasyonu: 1. kademeden kesilmiş fatura, takvim ayı limiti aşılsa bile 1. kademe kabul edilir', () => {
+  const k1 = gasBillRaw(B, 'İstanbul', '2026-09', 61, 1).total;
+  assert.equal(inferGasTier(B, 'İstanbul', '2026-09', 61, k1 * 1.05), 1);
+  const c = calibrate(B, 'gas', 'İstanbul', '2026-09', 61, k1 * 1.05);
+  assert.ok(c.ok && Math.abs(c.cal.factor - 1.05) < 1e-9, 'faktör yalnızca dağıtım/vergi farkını yansıtır');
+  const k2 = gasBillRaw(B, 'İstanbul', '2026-09', 61, 2).total;
+  assert.equal(inferGasTier(B, 'İstanbul', '2026-09', 61, k2), 2);
 });

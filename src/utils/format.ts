@@ -1,105 +1,29 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// Verim — Format Yardımcıları
-// Tüm ekranlarda tutarlı Türkçe biçimlendirme için buradan import edin.
-// ─────────────────────────────────────────────────────────────────────────────
+// Türkçe biçimlendirme yardımcıları.
 
-// ── Para Birimi ───────────────────────────────────────────────────────────────
+const nf = (min: number, max: number) => new Intl.NumberFormat('tr-TR', { minimumFractionDigits: min, maximumFractionDigits: max });
+const N0 = nf(0, 0), N1 = nf(0, 1), N2 = nf(2, 2), N3 = nf(0, 3);
 
-const TRY_FORMATTER = new Intl.NumberFormat('tr-TR', {
-  style:                 'currency',
-  currency:              'TRY',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+export const tl = (n: number) => `${N0.format(Math.round(n))} ₺`;
+export const tl2 = (n: number) => `${N2.format(n)} ₺`;
+export const m3 = (n: number, d: 0 | 1 | 3 = 1) => `${(d === 0 ? N0 : d === 1 ? N1 : N3).format(n)} m³`;
+export const num = (n: number) => N3.format(n);
+export const pct = (r: number) => `%${N0.format(Math.abs(r * 100))}`;
 
-/**
- * Sayıyı Türk Lirası formatına çevirir.
- * Çıktı: "1.482,50 ₺"
- *
- * @example
- * formatTRY(1482.5)  // → "1.482,50 ₺"
- * formatTRY(0)       // → "0,00 ₺"
- * formatTRY(49.9)    // → "49,90 ₺"
- */
-export function formatTRY(amount: number): string {
-  return TRY_FORMATTER.format(amount);
-}
+const MONTHS = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+const MONTHS_S = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
 
-/**
- * Küçük yer kaplayan kısa TL formatı — tablo/badge için.
- * Çıktı: "₺1.482,50"
- */
-export function formatTRYShort(amount: number): string {
-  const formatted = new Intl.NumberFormat('tr-TR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-  return `₺${formatted}`;
-}
+/** 'YYYY-MM' → 'Ekim 2026' */
+export const monthName = (key: string, withYear = true) => {
+  const m = parseInt(key.slice(5, 7), 10) - 1;
+  return withYear ? `${MONTHS[m]} ${key.slice(0, 4)}` : MONTHS[m];
+};
+export const monthShort = (key: string) => MONTHS_S[parseInt(key.slice(5, 7), 10) - 1];
 
-// ── Hacim (m³) ────────────────────────────────────────────────────────────────
+export const dateTR = (iso: string) => new Date(iso).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+export const dateTimeTR = (iso: string) =>
+  new Date(iso).toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-/**
- * m³ değerini okunabilir stringe çevirir.
- * @example formatM3(12.3456) → "12,35 m³"
- */
-export function formatM3(value: number, decimals = 2): string {
-  return `${new Intl.NumberFormat('tr-TR', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(value)} m³`;
-}
-
-// ── Enerji (kWh) ──────────────────────────────────────────────────────────────
-
-/**
- * kWh değerini formatlar.
- * @example formatKwh(301.6)  → "301,60 kWh"
- */
-export function formatKwh(value: number): string {
-  return `${new Intl.NumberFormat('tr-TR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)} kWh`;
-}
-
-// ── Tarih ─────────────────────────────────────────────────────────────────────
-
-/**
- * ISO tarihi Türkçe kısa tarih formatına çevirir.
- * @example formatDate("2026-06-02T...") → "2 Haz 2026"
- */
-export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('tr-TR', {
-    day:   'numeric',
-    month: 'short',
-    year:  'numeric',
-  });
-}
-
-/**
- * ISO tarihi gün+saat formatına çevirir.
- * @example formatDateTime("2026-06-02T14:35:00") → "2 Haz 2026, 14:35"
- */
-export function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('tr-TR', {
-    day:    'numeric',
-    month:  'short',
-    year:   'numeric',
-    hour:   '2-digit',
-    minute: '2-digit',
-  });
-}
-
-// ── Yüzde ─────────────────────────────────────────────────────────────────────
-
-/**
- * 0–1 arası oranı yüzde stringine çevirir.
- * @example formatPct(0.876) → "%87,6"
- */
-export function formatPct(ratio: number, decimals = 1): string {
-  return `%${new Intl.NumberFormat('tr-TR', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(ratio * 100)}`;
-}
+export const daysAgo = (iso: string) => {
+  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  return d <= 0 ? 'bugün' : d === 1 ? 'dün' : `${d} gün önce`;
+};

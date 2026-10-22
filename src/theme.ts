@@ -1,88 +1,45 @@
 /**
- * Verim — Cyber Dark Premium Tema
- * Tüm ekranlar bu sabitlerden import etmeli.
+ * Verim — tasarım sistemi. Koyu, endüstriyel, yüksek kontrast. Tüm ekranlar buradan import eder.
  */
 
 export const C = {
-  // ── Zemin ──────────────────────────────────────────
-  bg:         '#070A13',   // Deep Slate (ana arka plan)
-  card:       '#0D1424',   // Semi-transparent card
-  cardBorder: 'rgba(255,255,255,0.05)',
-  overlay:    'rgba(7,10,19,0.92)',
+  bg: '#070A12',
+  bgRaised: '#0B101C',
+  card: '#0F1626',
+  cardHi: '#141D31',
+  border: '#1C2740',
+  divider: '#141C2E',
 
-  // ── Aksanlar ───────────────────────────────────────
-  water:      '#06B6D4',   // Cyan (su)
-  waterDim:   '#062830',
-  gas:        '#F59E0B',   // Amber/Orange (doğalgaz)
-  gasDim:     '#2A1A00',
-  brand:      '#00FF9D',   // Neon Green (marka / başarı)
-  brandDim:   '#002A1A',
+  text: '#EEF2F8',
+  textDim: '#8C99B0',
+  textMuted: '#55627A',
 
-  // ── Durum ──────────────────────────────────────────
-  danger:     '#FF4757',
-  dangerDim:  '#2D0A0E',
-  warn:       '#FFA502',
-  warnDim:    '#2A1800',
-  success:    '#2ED573',
-  successDim: '#0A2A18',
+  brand: '#00E59B',
+  brandDim: '#00E59B1A',
+  water: '#22C3E6',
+  waterDim: '#22C3E61A',
+  gas: '#FFA630',
+  gasDim: '#FFA6301A',
 
-  // ── Abonelik ───────────────────────────────────────
-  pro:        '#818CF8',   // Indigo
-  proDim:     '#1A1E3A',
-  gold:       '#FFD700',
-  goldDim:    '#2A2200',
-
-  // ── Metin ──────────────────────────────────────────
-  text:       '#E2E8F0',
-  textMuted:  '#4A5568',
-  textDim:    '#718096',
-
-  // ── Kenarlık & Ayrıcı ──────────────────────────────
-  border:     '#1A2035',
-  divider:    '#111827',
+  danger: '#FF5468',
+  dangerDim: '#FF54681A',
+  warn: '#FFC247',
+  warnDim: '#FFC2471A',
+  ok: '#3DDC84',
+  okDim: '#3DDC841A',
+  // Geriye dönük uyumluluk
+  success: '#3DDC84',
+  successDim: '#3DDC841A',
+  cardBorder: '#1C2740',
 } as const;
 
-export const FONT = {
-  xs:   10,
-  sm:   12,
-  md:   14,
-  base: 16,
-  lg:   18,
-  xl:   22,
-  '2xl': 28,
-  '3xl': 36,
-  '4xl': 48,
-} as const;
+export const FONT = { xs: 11, sm: 13, md: 15, base: 16, lg: 18, xl: 22, '2xl': 28, '3xl': 36, '4xl': 46 } as const;
+export const RADIUS = { sm: 8, md: 12, lg: 16, xl: 22, full: 9999 } as const;
+export const SPACE = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, '2xl': 32 } as const;
 
-export const RADIUS = {
-  sm:  8,
-  md:  12,
-  lg:  16,
-  xl:  20,
-  '2xl': 28,
-  full: 9999,
-} as const;
+export const typeColor = (t: 'water' | 'gas') => (t === 'water' ? C.water : C.gas);
+export const typeDim = (t: 'water' | 'gas') => (t === 'water' ? C.waterDim : C.gasDim);
+export const typeLabel = (t: 'water' | 'gas') => (t === 'water' ? 'Su' : 'Doğalgaz');
 
-export const SHADOW = {
-  water: {
-    shadowColor: '#06B6D4',
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 8,
-  },
-  brand: {
-    shadowColor: '#00FF9D',
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 10,
-  },
-  gas: {
-    shadowColor: '#F59E0B',
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 8,
-  },
-} as const;
+/** Alt sekme çubuğu yüksekliği + boşluk — ekran içerikleri bunun kadar alttan pay bırakır */
+export const TAB_CLEARANCE = 110;

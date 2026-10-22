@@ -1,9 +1,7 @@
 module.exports = function (api) {
   api.cache(true);
   return {
-    presets: ['babel-preset-expo'],
-    plugins: [
-      'react-native-reanimated/plugin',
-    ],
+    // import.meta dönüşümü: zustand ESM derlemesi web'de "import.meta outside a module" hatası vermesin
+    presets: [['babel-preset-expo', { unstable_transformImportMeta: true }]],
   };
 };

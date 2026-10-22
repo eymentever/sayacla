@@ -1,0 +1,176 @@
+// Verim — tek kaynak veri deposu (v2). Sadece ham veri saklanır: okumalar, faturalar, mülkler.
+// Tüketim ve maliyet her zaman motor tarafından türetilir → tarife güncellenince geçmiş de doğru olur.
+
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Reading, UtilityType } from '../engine/types';
+import { PaidBill } from '../engine/summary';
+import { TariffBundle, DEFAULT_BUNDLE, mergeBundle } from '../engine/tariffs';
+
+export interface Property {
+  id: string;
+  name: string;
+  province: string;
+  district: string;
+  hasWater: boolean;
+  hasGas: boolean;
+  /** 'meter' → kendi gaz sayacı (kombi, kartlı dahil) · 'central' → merkezi sistem, yalnızca fatura girilir */
+  gasMode?: 'meter' | 'central';
+}
+
+export interface Profile {
+  name: string;
+  householdSize: number;
+  onboarded: boolean;
+}
+
+export interface Settings {
+  /** Aylık okuma hatırlatıcısı (ayın günü, 0 = kapalı) */
+  reminderDay: number;
+  /** Gaz kademe uyarısı bildirimleri */
+  tierAlerts: boolean;
+}
+
+interface State {
+  hydrated: boolean;
+  profile: Profile;
+  properties: Property[];
+  activePropertyId: string | null;
+  readings: Reading[];
+  bills: PaidBill[];
+  settings: Settings;
+  /** Uzak tarife paketi (null → gömülü paket) */
+  remoteTariffs: Partial<TariffBundle> | null;
+  tariffsFetchedAt: string | null;
+
+  completeOnboarding: (p: { name: string; householdSize: number; property: Omit<Property, 'id'> }) => void;
+  addProperty: (p: Omit<Property, 'id'>) => string;
+  updateProperty: (id: string, u: Partial<Property>) => void;
+  removeProperty: (id: string) => void;
+  setActiveProperty: (id: string) => void;
+  setProfile: (u: Partial<Profile>) => void;
+  addReading: (r: Omit<Reading, 'id'>) => void;
+  removeReading: (id: string) => void;
+  addBill: (b: Omit<PaidBill, 'id'>) => void;
+  removeBill: (id: string) => void;
+  setSettings: (u: Partial<Settings>) => void;
+  setRemoteTariffs: (t: Partial<TariffBundle>) => void;
+  resetAll: () => void;
+}
+
+const uid = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+
+const INITIAL = {
+  profile: { name: '', householdSize: 3, onboarded: false },
+  properties: [] as Property[],
+  activePropertyId: null as string | null,
+  readings: [] as Reading[],
+  bills: [] as PaidBill[],
+  settings: { reminderDay: 1, tierAlerts: true },
+  remoteTariffs: null as Partial<TariffBundle> | null,
+  tariffsFetchedAt: null as string | null,
+};
+
+export const useVerim = create<State>()(
+  persist(
+    (set, get) => ({
+      hydrated: false,
+      ...INITIAL,
+
+      completeOnboarding: ({ name, householdSize, property }) => {
+        const id = uid();
+        set({
+          profile: { name: name.trim(), householdSize, onboarded: true },
+          properties: [{ ...property, id }],
+          activePropertyId: id,
+        });
+      },
+      addProperty: p => {
+        const id = uid();
+        set(s => ({ properties: [...s.properties, { ...p, id }], activePropertyId: id }));
+        return id;
+      },
+      updateProperty: (id, u) => set(s => ({ properties: s.properties.map(p => (p.id === id ? { ...p, ...u } : p)) })),
+      removeProperty: id => set(s => {
+        const properties = s.properties.filter(p => p.id !== id);
+        return {
+          properties,
+          readings: s.readings.filter(r => r.propertyId !== id),
+          bills: s.bills.filter(b => b.propertyId !== id),
+          activePropertyId: s.activePropertyId === id ? properties[0]?.id ?? null : s.activePropertyId,
+        };
+      }),
+      setActiveProperty: id => set({ activePropertyId: id }),
+      setProfile: u => set(s => ({ profile: { ...s.profile, ...u } })),
+      addReading: r => set(s => ({ readings: [...s.readings, { ...r, id: uid() }] })),
+      removeReading: id => set(s => ({ readings: s.readings.filter(r => r.id !== id) })),
+      addBill: b => set(s => ({
+        // Aynı mülk/tür/ay için tek fatura: yenisi eskisinin yerine geçer
+        bills: [...s.bills.filter(x => !(x.propertyId === b.propertyId && x.type === b.type && x.month === b.month)), { ...b, id: uid() }],
+      })),
+      removeBill: id => set(s => ({ bills: s.bills.filter(b => b.id !== id) })),
+      setSettings: u => set(s => ({ settings: { ...s.settings, ...u } })),
+      setRemoteTariffs: t => set({ remoteTariffs: t, tariffsFetchedAt: new Date().toISOString() }),
+      resetAll: () => set({ ...INITIAL }),
+    }),
+    {
+      name: 'verim-v2',
+      version: 2,
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: ({ hydrated, ...rest }) => rest as any,
+      onRehydrateStorage: () => state => {
+        migrateLegacy().finally(() => useVerim.setState({ hydrated: true }));
+        void state;
+      },
+    },
+  ),
+);
+
+// ── Seçiciler ────────────────────────────────────────────────────────────────
+
+export function useActiveProperty(): Property | null {
+  return useVerim(s => s.properties.find(p => p.id === s.activePropertyId) ?? s.properties[0] ?? null);
+}
+
+let cachedBundle: { key: unknown; value: TariffBundle } | null = null;
+export function useTariffs(): TariffBundle {
+  const remote = useVerim(s => s.remoteTariffs);
+  if (!cachedBundle || cachedBundle.key !== remote) cachedBundle = { key: remote, value: mergeBundle(DEFAULT_BUNDLE, remote) };
+  return cachedBundle.value;
+}
+
+export function readingsFor(readings: Reading[], propertyId: string | undefined, type?: UtilityType) {
+  return readings.filter(r => r.propertyId === propertyId && (!type || r.type === type));
+}
+
+// ── Eski (v1) veriyi taşı ────────────────────────────────────────────────────
+
+async function migrateLegacy() {
+  try {
+    const s = useVerim.getState();
+    if (s.profile.onboarded) return;
+    const raw = await AsyncStorage.getItem('verim-utility-store');
+    if (!raw) return;
+    const old = JSON.parse(raw)?.state;
+    if (!old?.profile?.setupComplete) return;
+    const props: Property[] = (old.properties ?? []).map((p: any) => ({
+      id: String(p.id), name: p.name ?? 'Evim', province: p.city ?? 'İstanbul', district: p.district ?? '',
+      hasWater: true, hasGas: true,
+    }));
+    const readings: Reading[] = (old.logs ?? [])
+      .filter((l: any) => typeof l.indexValue === 'number' && l.date && (l.type === 'water' || l.type === 'gas'))
+      .map((l: any) => ({
+        id: String(l.id), propertyId: String(l.propertyId), type: l.type, date: l.date, index: l.indexValue, source: 'manual' as const,
+      }));
+    useVerim.setState({
+      profile: { name: old.profile.name ?? '', householdSize: old.profile.householdSize ?? 3, onboarded: props.length > 0 },
+      properties: props,
+      activePropertyId: old.activePropertyId ?? props[0]?.id ?? null,
+      readings,
+    });
+    await AsyncStorage.removeItem('verim-utility-store');
+  } catch {
+    /* taşıma başarısızsa kullanıcı baştan kurulum yapar */
+  }
+}

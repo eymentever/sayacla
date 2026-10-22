@@ -20,13 +20,13 @@ export function gasLimit(bundle: TariffBundle, province: string, month: string):
   return p ? p.limits[monthIdx(month)] : Infinity;
 }
 
-/** Ham (kalibrasyonsuz) gaz faturası. */
-export function gasBillRaw(bundle: TariffBundle, province: string, month: string, m3: number) {
+/** Ham (kalibrasyonsuz) gaz faturası. forceTier verilirse limit yerine o kademe uygulanır. */
+export function gasBillRaw(bundle: TariffBundle, province: string, month: string, m3: number, forceTier?: 1 | 2) {
   const n = bundle.gas.national;
   const p = bundle.gas.provinces[province];
   const skb = p?.skbPerM3 ?? 3.0;
   const limit = gasLimit(bundle, province, month);
-  const tier: 1 | 2 = m3 > limit ? 2 : 1;
+  const tier: 1 | 2 = forceTier ?? (m3 > limit ? 2 : 1);
   const unit = tier === 1 ? n.k1 : n.k2;
   const energy = m3 * unit;
   const dist = m3 * skb;
@@ -56,8 +56,7 @@ export function gasBill(
 
 /** Su: kademeli birim fiyat, ücretsiz m³ düşülür, KDV + ÇTV + sabit bedel eklenir. */
 export function waterBillRaw(w: WaterProvince, m3: number) {
-  const billable = Math.max(0, m3 - (w.freeM3 ?? 0));
-  let rest = billable;
+  let rest = m3;
   let prev = 0;
   let tariff = 0;
   for (const t of w.tiers) {
@@ -67,6 +66,13 @@ export function waterBillRaw(w: WaterProvince, m3: number) {
     tariff += v * t.rate;
     rest -= v;
     prev = t.upTo ?? prev;
+  }
+  // İnsani su hakkı (ör. İSKİ): 1. kademedeki tüketimin %20'si, en fazla freeM3, 1. kademe fiyatından düşülür.
+  // Kademe sınırları gerçek tüketime göre kalır.
+  if (w.freeM3 && w.freeM3 > 0) {
+    const t1 = w.tiers[0];
+    const inTier1 = Math.min(m3, t1.upTo ?? m3);
+    tariff -= Math.min(w.freeM3, inTier1 * 0.2) * t1.rate;
   }
   const kdv = tariff * w.kdv;
   const ctv = m3 * w.ctvPerM3;
@@ -96,18 +102,43 @@ export function waterBill(
  * Faturadan kalibrasyon: kullanıcının gerçek faturasındaki m³ ve toplam TL'yi motor tahminiyle oranlar.
  * Aşırı oranlar (yanlış giriş) reddedilir.
  */
+/**
+ * Gaz faturasının gerçekte hangi kademeden kesildiğini birim fiyattan çıkarır. Faturalar okuma
+ * tarihinden okuma tarihine kesildiği için takvim ayı limitiyle aynı sonucu vermeyebilir.
+ */
+export function inferGasTier(bundle: TariffBundle, province: string, month: string, m3: number, amount: number): 1 | 2 {
+  const k1 = gasBillRaw(bundle, province, month, m3, 1).total;
+  const k2 = gasBillRaw(bundle, province, month, m3, 2).total;
+  return Math.abs(amount - k1) <= Math.abs(amount - k2) ? 1 : 2;
+}
+
+/** Kalibrasyon katsayısı: gerçek tutar / aynı kademedeki motor tahmini (yalnızca dağıtım+vergi farkını öğrenir). */
+export function calibrationFactor(
+  bundle: TariffBundle, type: 'water' | 'gas', province: string, month: string, m3: number, totalTL: number,
+): number {
+  const est = type === 'gas'
+    ? gasBillRaw(bundle, province, month, m3, inferGasTier(bundle, province, month, m3, totalTL)).total
+    : waterBillRaw(bundle.water[province], m3).total;
+  return totalTL / est;
+}
+
+/**
+ * Faturadan kalibrasyon: kullanıcının gerçek faturasındaki m³ ve toplam TL'yi motor tahminiyle oranlar.
+ * Aşırı oranlar (yanlış giriş) reddedilir.
+ */
 export function calibrate(
   bundle: TariffBundle, type: 'water' | 'gas', province: string, month: string, m3: number, totalTL: number,
-): { ok: true; cal: Calibration } | { ok: false; reason: string } {
+): { ok: true; cal: Calibration; tier?: 1 | 2 } | { ok: false; reason: string } {
   if (!(m3 > 0) || !(totalTL > 0)) return { ok: false, reason: 'Tüketim ve tutar sıfırdan büyük olmalı.' };
-  const est = type === 'gas'
-    ? gasBillRaw(bundle, province, month, m3).total
-    : waterBillRaw(bundle.water[province], m3).total;
-  const factor = totalTL / est;
+  const factor = calibrationFactor(bundle, type, province, month, m3, totalTL);
   if (factor < 0.4 || factor > 2.5) {
-    return { ok: false, reason: `Girilen tutar beklenenden çok farklı (tahmin ≈ ${Math.round(est)} TL). Faturadaki m³ ve "ödenecek tutar" alanlarını kontrol et.` };
+    const est = type === 'gas' ? gasBillRaw(bundle, province, month, m3).total : waterBillRaw(bundle.water[province], m3).total;
+    return { ok: false, reason: `Girilen tutar beklenenden çok farklı (tahmin ≈ ${Math.round(est).toLocaleString('tr-TR')} TL). Faturadaki m³ ve "ödenecek tutar" alanlarını kontrol et.` };
   }
-  return { ok: true, cal: { factor, asOf: new Date().toISOString().slice(0, 10) } };
+  return {
+    ok: true, cal: { factor, asOf: new Date().toISOString().slice(0, 10) },
+    tier: type === 'gas' ? inferGasTier(bundle, province, month, m3, totalTL) : undefined,
+  };
 }
 
 export function billFor(

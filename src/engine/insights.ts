@@ -4,6 +4,7 @@ import { Reading, UtilityType } from './types';
 import { buildIntervals, forecastMonth, monthlyUsage, monthKey } from './consumption';
 import { TariffBundle } from './tariffs';
 import { gasBillRaw, gasLimit, Calibration } from './bills';
+import { d1, d0 } from './fmt';
 
 export type Level = 'info' | 'warning' | 'critical';
 export interface Insight {
@@ -40,7 +41,7 @@ export function gasTierInsight(
     return {
       id: 'gas-tier-exceeded', type: 'gas', level: 'critical',
       title: 'Doğalgaz 2. kademeye geçti',
-      body: `Bu ay ${fc.measured.toFixed(1)} m³ kullandın; ${province} limiti ${limit.toFixed(1)} m³. ` +
+      body: `Bu ay ${d1(fc.measured)} m³ kullandın; ${province} limiti ${d1(limit)} m³. ` +
         `Ayın tüm tüketimi 2. kademe fiyatından (${bundle.gas.national.k2} TL/Sm³) faturalanacak.`,
       action: 'Bundan sonraki tüketim faturayı daha da büyütür; kombiyi 1–2 °C düşürmek etkili olur.',
       impactTL: r0(penalty),
@@ -50,18 +51,18 @@ export function gasTierInsight(
     const perDayBudget = daysLeft > 0 ? remaining / daysLeft : 0;
     return {
       id: 'gas-tier-risk', type: 'gas', level: 'warning',
-      title: `Kademe limitine ${remaining.toFixed(1)} m³ kaldı`,
-      body: `Bu hızla ay sonunda ~${fc.projected.toFixed(0)} m³ olacak (limit ${limit.toFixed(1)} m³). ` +
-        `Limiti 1 m³ bile aşarsan faturan yaklaşık ${r0(penalty)} TL artar.`,
-      action: daysLeft > 0 ? `Limitte kalmak için günde en fazla ${perDayBudget.toFixed(1)} m³ kullan.` : undefined,
+      title: `Kademe limitine ${d1(remaining)} m³ kaldı`,
+      body: `Bu hızla ay sonunda ~${d0(fc.projected)} m³ olacak (limit ${d1(limit)} m³). ` +
+        `Limiti 1 m³ bile aşarsan faturan yaklaşık ${d0(penalty)} TL artar.`,
+      action: daysLeft > 0 ? `Limitte kalmak için günde en fazla ${d1(perDayBudget)} m³ kullan.` : undefined,
       impactTL: r0(penalty),
     };
   }
   if (fc.measured > 0) {
     return {
       id: 'gas-tier-ok', type: 'gas', level: 'info',
-      title: `1. kademedesin — ${remaining.toFixed(1)} m³ hakkın var`,
-      body: `${province} için bu ayın limiti ${limit.toFixed(1)} m³. Ay sonu tahmini ~${fc.projected.toFixed(0)} m³.`,
+      title: `1. kademedesin — ${d1(remaining)} m³ hakkın var`,
+      body: `${province} için bu ayın limiti ${d1(limit)} m³. Ay sonu tahmini ~${d0(fc.projected)} m³.`,
     };
   }
   return null;
@@ -88,10 +89,10 @@ export function anomalyInsight(readings: Reading[], type: UtilityType, now = new
   return {
     id: `${type}-anomaly`, type,
     level: ratio >= 1.8 ? 'critical' : 'warning',
-    title: `${type === 'water' ? 'Su' : 'Doğalgaz'} tüketimi %${r0((ratio - 1) * 100)} arttı`,
+    title: `${type === 'water' ? 'Su' : 'Doğalgaz'} tüketimi %${d0((ratio - 1) * 100)} arttı`,
     body: type === 'water'
-      ? `Bu ay ~${norm(cur).toFixed(1)} m³, önceki aylar ortalaması ~${baseline.toFixed(1)} m³.`
-      : `Bu ay ~${norm(cur).toFixed(0)} m³, geçen yılın aynı ayı ~${baseline.toFixed(0)} m³.`,
+      ? `Bu ay ~${d1(norm(cur))} m³, önceki aylar ortalaması ~${d1(baseline)} m³.`
+      : `Bu ay ~${d0(norm(cur))} m³, geçen yılın aynı ayı ~${d0(baseline)} m³.`,
     action: type === 'water'
       ? 'Kaçak testi yap: tüm muslukları kapat, 2 saat sonra sayacı tekrar oku.'
       : 'Kombi bakımı ve oda termostatı ayarını kontrol et.',
@@ -108,7 +109,7 @@ export function leakTestResult(startIndex: number, endIndex: number, minutes: nu
   if (liters <= 0.5) return { leak: false as const, liters, perDayL: 0, message: 'Kaçak görünmüyor. Sayaç kapalıyken sabit kaldı.' };
   return {
     leak: true as const, liters, perDayL,
-    message: `Tüm su kapalıyken ${liters.toFixed(1)} litre geçti — günde ~${r0(perDayL)} litre (ayda ~${(perDayL * 30 / 1000).toFixed(1)} m³) kaçak olabilir. ` +
+    message: `Tüm su kapalıyken ${d1(liters)} litre geçti — günde ~${d0(perDayL)} litre (ayda ~${d1((perDayL * 30 / 1000))} m³) kaçak olabilir. ` +
       'Önce rezervuarı (klozet) kontrol et; sorun sürerse tesisatçı çağır.',
   };
 }
