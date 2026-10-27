@@ -53,7 +53,7 @@ export default function PropertyScreen() {
       <Segmented value={gas} onChange={setGas} options={[
         { value: 'meter', label: 'Kombi', color: C.gas }, { value: 'central', label: 'Merkezi', color: C.gas }, { value: 'none', label: 'Yok', color: C.gas },
       ]} />
-      <T.Small style={{ marginTop: 8, marginBottom: SPACE.lg }}>Kartlı sayaçlar "Kombi" kapsamındadır. Merkezi sistemde fatura girerek destekli hak takibi yapılır.</T.Small>
+      <T.Small style={{ marginTop: 8, marginBottom: SPACE.lg }}>Kartlı sayaçlar "Kombi" kapsamındadır. Merkezi sistemde fatura girerek limit takibi yapılır.</T.Small>
 
       {existing && existing.id !== st.activePropertyId && (
         <Button kind="secondary" title="Bu evi aktif yap" onPress={() => { st.setActiveProperty(existing.id); router.back(); }} style={{ marginBottom: SPACE.sm }} />

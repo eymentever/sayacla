@@ -99,7 +99,7 @@ export default function BillScreen() {
           <Row label="Senin birim fiyatın" value={`${(a / m3v!).toFixed(2).replace('.', ',')} ₺/m³`} valueColor={color} />
           {est.gas ? (() => {
             const t = inferGasTier(bundle, prop.province, month, m3v!, a);
-            return <Row label="Faturan hangi fiyattan?" value={t === 1 ? 'Destekli fiyat' : 'Desteksiz fiyat'} valueColor={t === 2 ? C.danger : C.ok} />;
+            return <Row label="Faturan hangi fiyattan?" value={t === 1 ? 'Ucuz fiyat' : 'Pahalı fiyat (limit aşılmış)'} valueColor={t === 2 ? C.danger : C.ok} />;
           })() : null}
         </Card>
       ) : null}

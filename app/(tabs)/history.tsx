@@ -104,7 +104,7 @@ export default function History() {
           <View style={s.legend}>
             <Legend color={color} label="Okumalardan" opacity={0.8} />
             <Legend color={color} label="Eksik / bu ay" opacity={0.45} />
-            {type === 'gas' ? <Legend color={C.danger} label="Desteksiz fiyat" /> : null}
+            {type === 'gas' ? <Legend color={C.danger} label="Pahalı fiyat" /> : null}
           </View>
         </Card>
       )}
@@ -116,7 +116,7 @@ export default function History() {
             <View key={r.month} style={s.monthRow}>
               <View style={{ flex: 1 }}>
                 <Text style={s.monthName}>{monthName(r.month)}{r.isCurrent ? ' (devam ediyor)' : ''}</Text>
-                <T.Small>{m3(r.m3)}{r.partial && !r.isCurrent ? ' · eksik veriden tamamlandı' : ''}{r.tier === 2 ? ' · desteksiz fiyat' : ''}</T.Small>
+                <T.Small>{m3(r.m3)}{r.partial && !r.isCurrent ? ' · eksik veriden tamamlandı' : ''}{r.tier === 2 ? ' · pahalı fiyat' : ''}</T.Small>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
                 {r.paid != null ? <><Text style={s.monthTL}>{tl(r.paid)}</Text><Badge text="fatura" color={C.ok} /></>

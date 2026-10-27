@@ -19,7 +19,7 @@ export async function ensurePermission(): Promise<boolean> {
 
 export async function setupChannels() {
   if (Platform.OS !== 'android') return;
-  await Notifications.setNotificationChannelAsync('alerts', { name: 'Kademe ve kaçak uyarıları', importance: Notifications.AndroidImportance.HIGH });
+  await Notifications.setNotificationChannelAsync('alerts', { name: 'Limit ve kaçak uyarıları', importance: Notifications.AndroidImportance.HIGH });
   await Notifications.setNotificationChannelAsync('reminders', { name: 'Okuma hatırlatıcısı', importance: Notifications.AndroidImportance.DEFAULT });
 }
 
@@ -34,7 +34,7 @@ export async function scheduleMonthlyReminder(day: number, ask = false) {
   if (!granted) return;
   await Notifications.scheduleNotificationAsync({
     identifier: REMINDER_ID,
-    content: { title: 'Sayaç okuma zamanı', body: 'Su ve doğalgaz sayacını okut; bu ayın faturasını ve kademe durumunu gör.', data: { route: '/scan' } },
+    content: { title: 'Sayaç okuma zamanı', body: 'Su ve doğalgaz sayacını okut; bu ayın faturasını ve doğalgaz limitini gör.', data: { route: '/scan' } },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.MONTHLY, day: Math.min(28, Math.max(1, day)), hour: 10, minute: 0, channelId: 'reminders' } as any,
   });
 }
@@ -85,7 +85,7 @@ export async function syncWeeklyHeatingReminder(enabled: boolean) {
   if (!perm.granted) return;
   await Notifications.scheduleNotificationAsync({
     identifier: WEEKLY_ID,
-    content: { title: 'Haftalık kademe kontrolü', body: 'Doğalgaz sayacını okut: limitine ne kadar kaldığını ve ay sonu faturanı gör.', data: { route: '/scan' } },
+    content: { title: 'Haftalık doğalgaz kontrolü', body: 'Doğalgaz sayacını okut: limitine ne kadar kaldığını ve ay sonu faturanı gör.', data: { route: '/scan' } },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: 1, hour: 11, minute: 0, channelId: 'reminders' } as any,
   });
 }
@@ -97,7 +97,7 @@ export async function scheduleTierFollowUp() {
   if (!perm.granted) return;
   await Notifications.scheduleNotificationAsync({
     identifier: FOLLOWUP_ID,
-    content: { title: 'Limitine yakınsın — tekrar oku', body: 'Son 3 günün tüketimine bakalım; 1. kademede kalıp kalmadığını hemen gör.', data: { route: '/scan' } },
+    content: { title: 'Limitine yakınsın — tekrar oku', body: 'Son 3 günün tüketimine bakalım; ucuz fiyatta kalıp kalmadığını hemen gör.', data: { route: '/scan' } },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3 * 86400, channelId: 'alerts' } as any,
   });
 }
@@ -109,7 +109,7 @@ export async function scheduleSecondReading() {
   if (!(await Notifications.getPermissionsAsync()).granted) return;
   await Notifications.scheduleNotificationAsync({
     identifier: SECOND_ID,
-    content: { title: 'İkinci okuma zamanı', body: 'Sayacını tekrar okut; tüketimini, ay sonu faturanı ve doğalgaz hakkını hemen görelim.', data: { route: '/scan' } },
+    content: { title: 'İkinci okuma zamanı', body: 'Sayacını tekrar okut; tüketimini, ay sonu faturanı ve doğalgaz limitine ne kadar kaldığını görelim.', data: { route: '/scan' } },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 4 * 86400, channelId: 'reminders' } as any,
   });
 }

@@ -38,34 +38,36 @@ export function gasTierInsight(
   const penalty = justOverK2 - atLimitK1;
 
   if (fc.measured > limit) {
+    const m3End = Math.max(fc.measured, fc.projected);
+    const extra = (gasBillRaw(bundle, province, month, m3End, 2).total - gasBillRaw(bundle, province, month, m3End, 1).total) * f;
     return {
       id: 'gas-tier-exceeded', type: 'gas', level: 'critical',
-      title: 'Doğalgazda devlet desteğini bu ay kaybettin',
-      body: `Bu ay ${d1(fc.measured)} m³ kullandın; ${province} için destekli kullanım hakkın ${d1(limit)} m³. ` +
-        `Hakkı aştığın için ayın tüm gazı desteksiz (pahalı) fiyattan faturalanacak.`,
-      action: 'Bundan sonraki tüketim faturayı daha da büyütür; kombiyi 1–2 °C düşürmek etkili olur.',
-      impactTL: r0(penalty),
+      title: 'Bu ay doğalgaz pahalı fiyattan hesaplanacak',
+      body: `Bu ay ${d1(fc.measured)} m³ kullandın; ${province} için aylık ucuz fiyat limiti ${d1(limit)} m³. ` +
+        `Limit aşıldığı için ayın tüm gazı pahalı fiyattan hesaplanır; bu sana yaklaşık ${d0(extra)} TL ek maliyet.`,
+      action: 'Limit her ayın 1\'inde sıfırlanır. Ay sonuna kadar her 1 °C düşüş yine faturayı azaltır; gelecek ay limitin altında kalman için seni zamanında uyaracağız.',
+      impactTL: r0(extra),
     };
   }
   if (fc.reliable && fc.projected > limit) {
     const perDayBudget = daysLeft > 0 ? remaining / daysLeft : 0;
     return {
       id: 'gas-tier-risk', type: 'gas', level: 'warning',
-      title: `Destekli gaz hakkının bitmesine ${d1(remaining)} m³ kaldı`,
-      body: `Bu hızla ay sonunda ~${d0(fc.projected)} m³ kullanacaksın; hakkın ${d1(limit)} m³. ` +
-        `1 m³ bile aşarsan devlet desteği o ay tamamen düşer ve faturan yaklaşık ${d0(penalty)} TL artar.`,
+      title: `Ucuz fiyat limitine ${d1(remaining)} m³ kaldı`,
+      body: `Bu hızla ay sonunda ~${d0(fc.projected)} m³ kullanacaksın; limit ${d1(limit)} m³. ` +
+        `Limiti 1 m³ bile aşarsan ayın tüm gazı pahalı fiyattan hesaplanır ve faturan yaklaşık ${d0(penalty)} TL artar.`,
       action: daysLeft <= 0 ? undefined
         : fc.measured > 0 && perDayBudget < 0.4 * ((fc.projected - fc.measured) / Math.max(1, daysLeft))
-          ? `Hakkında kalmak için günde ${d1(perDayBudget)} m³'e inmen gerekir; bu, şu anki tüketiminin çok altında. Yine de kombiyi 1–2 °C düşürmek ve gece kısmak faturayı belirgin şekilde azaltır.`
-          : `Hakkında kalmak için ay sonuna kadar günde en fazla ${d1(perDayBudget)} m³ kullan.`,
+          ? `Ucuz fiyatta kalmak için günde ${d1(perDayBudget)} m³'e inmen gerekir; bu, şu anki tüketiminin çok altında. Yine de kombiyi 1–2 °C düşürmek ve gece kısmak faturayı belirgin şekilde azaltır.`
+          : `Ay sonuna kadar günde en fazla ${d1(perDayBudget)} m³ kullanırsan ucuz fiyatta kalırsın.`,
       impactTL: r0(penalty),
     };
   }
   if (fc.measured > 0) {
     return {
       id: 'gas-tier-ok', type: 'gas', level: 'info',
-      title: `Destekli fiyattasın — ${d1(remaining)} m³ hakkın var`,
-      body: `${province} için bu ayki destekli kullanım hakkın ${d1(limit)} m³. Ay sonu tahminin ~${d0(fc.projected)} m³.`,
+      title: `Ucuz fiyattasın — limite ${d1(remaining)} m³ var`,
+      body: `${province} için bu ayki ucuz fiyat limiti ${d1(limit)} m³. Ay sonu tahminin ~${d0(fc.projected)} m³.`,
     };
   }
   return null;

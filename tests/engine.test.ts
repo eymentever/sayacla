@@ -131,7 +131,7 @@ test('özet: geçen ay gerçek fatura varsa onunla kıyaslar ve nedeni açıklar
   assert.ok(s.projectedBill && s.lastMonth?.isActual);
   assert.equal(s.lastMonth!.amount, 420);
   assert.ok(s.deltaTL! > 0);
-  assert.match(s.reason!, /devlet desteğini/);
+  assert.match(s.reason!, /pahalı fiyat/);
 });
 
 test('öneriler TL bazlı, büyükten küçüğe, kademe sınırı önerisi en üstte', () => {

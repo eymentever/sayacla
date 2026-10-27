@@ -30,13 +30,13 @@ export default function TariffInfo() {
 
       <Card>
         <View style={s.row}><T.Title style={{ flex: 1 }}>Doğalgaz</T.Title><Badge text={n.verified ? 'BOTAŞ resmi' : 'tahmini'} color={n.verified ? C.ok : C.warn} /></View>
-        <Row label="Destekli fiyat (1. kademe, vergisiz)" value={`${f(n.k1, 3)} ₺/Sm³`} />
-        <Row label="Desteksiz fiyat (2. kademe, vergisiz)" value={`${f(n.k2, 3)} ₺/Sm³`} />
+        <Row label="Ucuz fiyat (1. kademe, vergisiz)" value={`${f(n.k1, 3)} ₺/Sm³`} />
+        <Row label="Pahalı fiyat (2. kademe, vergisiz)" value={`${f(n.k2, 3)} ₺/Sm³`} />
         <Row label="Dağıtım bedeli" value={`~${f(g.skbPerM3)} ₺/Sm³`} />
         <Row label="ÖTV / KDV" value={`${f(n.otvPerM3, 4)} ₺ · %${Math.round(n.kdv * 100)}`} />
-        <T.Small style={{ marginTop: SPACE.sm }}>Destekli hakkı aşarsan o ayın tüm tüketimi desteksiz fiyattan faturalanır.</T.Small>
+        <T.Small style={{ marginTop: SPACE.sm }}>Aylık limiti aşarsan o ayın tüm tüketimi pahalı fiyattan faturalanır.</T.Small>
         <Divider />
-        <T.Label style={{ marginTop: SPACE.md, marginBottom: SPACE.sm }}>Aylık destekli kullanım hakkı (Sm³)</T.Label>
+        <T.Label style={{ marginTop: SPACE.md, marginBottom: SPACE.sm }}>Aylık ucuz fiyat limiti (Sm³)</T.Label>
         <View style={s.grid}>
           {MONTHS.map((m, i) => (
             <View key={m} style={[s.cell, i === cur && { borderColor: C.gas }]}>

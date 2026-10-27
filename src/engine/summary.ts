@@ -89,12 +89,12 @@ export function summarize(
     if (type === 'gas' && projectedBill.gas) {
       const lastTier = lastMonth.isActual ? inferGasTier(bundle, province, pm, lastMonth.m3, lastMonth.amount) : (lastMonth.m3 > gasLimit(bundle, province, pm) ? 2 : 1);
       if (projectedBill.gas.tier !== lastTier) parts.push(projectedBill.gas.tier === 2
-        ? (fc.measured > gasLimit(bundle, province, month) ? 'devlet desteği bu ay kaybedildi (pahalı fiyat)' : 'devlet desteğini kaybetme riski')
-        : 'destekli fiyata dönüş');
+        ? (fc.measured > gasLimit(bundle, province, month) ? 'limit aşıldı, pahalı fiyat' : 'pahalı fiyata geçme riski')
+        : 'ucuz fiyata dönüş');
     }
     if (type === 'gas') {
       const limNow = gasLimit(bundle, province, month), limPrev = gasLimit(bundle, province, pm);
-      if (Number.isFinite(limNow) && Math.abs(limNow - limPrev) > 1) parts.push(`destekli hak ${d0(limPrev)} → ${d0(limNow)} m³`);
+      if (Number.isFinite(limNow) && Math.abs(limNow - limPrev) > 1) parts.push(`aylık limit ${d0(limPrev)} → ${d0(limNow)} m³`);
     }
     reason = parts.length ? parts.join(' · ') : 'tüketim geçen ayla aynı seviyede';
   }
@@ -139,8 +139,8 @@ export function savingsTips(
       const cut = gM3 - limit + 0.5;
       tips.push({
         id: 'gas-stay-k1', type: 'gas', effort: 'kolay',
-        title: `${d1(cut)} m³ az kullan, devlet desteğini kaybetme`,
-        body: `Ay sonu tahminin ${d1(gM3)} m³, destekli hakkın ${d1(limit)} m³. Hakkında kalırsan ayın tüm gazı destekli (ucuz) fiyattan faturalanır.`,
+        title: `${d1(cut)} m³ az kullan, ucuz fiyatta kal`,
+        body: `Ay sonu tahminin ${d1(gM3)} m³, limit ${d1(limit)} m³. Limitin altında kalırsan ayın tüm gazı ucuz fiyattan hesaplanır.`,
         monthlyTL: r0(savingOf(bundle, 'gas', province, month, gM3, cut, gCal)),
       });
     }

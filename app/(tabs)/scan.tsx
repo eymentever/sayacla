@@ -151,7 +151,7 @@ export default function Scan() {
       // Bağlamlı izin: ikinci okumayı hatırlatmak için
       setTimeout(() => Alert.alert(
         'İkinci okumayı hatırlatalım mı?',
-        'Tüketimini hesaplamak için birkaç gün sonra tekrar okuman gerekiyor. Ayrıca doğalgaz hakkın dolmak üzereyken seni uyarabiliriz.',
+        'Tüketimini hesaplamak için birkaç gün sonra tekrar okuman gerekiyor. Ayrıca doğalgaz limitine yaklaştığında seni uyarabiliriz.',
         [{ text: 'Şimdi değil', style: 'cancel' }, { text: 'Hatırlat', onPress: () => {
           scheduleMonthlyReminder(useVerim.getState().settings.reminderDay || 1, true).then(() => scheduleSecondReading()).catch(() => {});
         } }],
@@ -290,7 +290,7 @@ export default function Scan() {
                 {preview?.soFar && <Row label="Bu ay şu ana kadar" value={`${m3(preview.fc.measured)} · ${tl(preview.soFar.total)}`} />}
                 {preview?.projected && <Row label="Ay sonu tahmini" value={tl(preview.projected.total)} bold valueColor={color} />}
                 {preview?.projected?.gas && (
-                  <Row label="Doğalgaz fiyatı (ay sonu)" value={preview.projected.gas.tier === 1 ? 'Destekli' : 'Desteksiz — hak aşılıyor'} valueColor={preview.projected.gas.tier === 2 ? C.danger : C.ok} />
+                  <Row label="Doğalgaz fiyatı (ay sonu)" value={preview.projected.gas.tier === 1 ? 'Ucuz fiyat' : 'Pahalı fiyat — limit aşılıyor'} valueColor={preview.projected.gas.tier === 2 ? C.danger : C.ok} />
                 )}
                 {!last && <T.Small style={{ marginTop: SPACE.md }}>Bu ilk okuman. Birkaç gün sonra tekrar okuduğunda tüketim ve fatura tahmini başlar.</T.Small>}
               </>

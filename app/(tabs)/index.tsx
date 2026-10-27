@@ -117,7 +117,7 @@ export default function Dashboard() {
             {[
               { n: 1, t: 'Sayacını bul ve oku', d: 'Fotoğrafını çek ya da rakamları yaz. 30 saniye.', done: propReadings.length > 0 },
               { n: 2, t: '3–7 gün sonra tekrar oku', d: 'Aradaki farktan günlük tüketimini buluruz.', done: false },
-              { n: 3, t: 'Faturanı önceden gör', d: 'Ay sonu tutarı, devlet desteği hakkın ve sana özel tasarruf yolları.', done: false },
+              { n: 3, t: 'Faturanı önceden gör', d: 'Ay sonu tutarı, doğalgaz limitin ve sana özel tasarruf yolları.', done: false },
             ].map(x => (
               <View key={x.n} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
                 <View style={[s.stepNum, x.done && { backgroundColor: C.brand, borderColor: C.brand }]}>
@@ -147,7 +147,7 @@ export default function Dashboard() {
               <View style={{ flex: 1 }}>
                 <T.Small>Sayaçla ile korunan</T.Small>
                 <Text style={{ color: C.ok, fontSize: FONT['2xl'], fontWeight: '800' }}>{tl(ps.total)}</Text>
-                <T.Small>{ps.months.map(m => monthName(m.month, false)).join(', ')}: uyarıdan sonra destekli hakkında kaldın; desteksiz fiyat farkını ödemedin.</T.Small>
+                <T.Small>{ps.months.map(m => monthName(m.month, false)).join(', ')}: uyarıdan sonra limitin altında kaldın; pahalı fiyat farkını ödemedin.</T.Small>
               </View>
             </View>
           </Card>
@@ -290,8 +290,8 @@ function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
           {limit != null && Number.isFinite(limit) && (
             <View style={{ marginTop: SPACE.lg }}>
               <View style={s.rowBetween}>
-                <TouchableOpacity onPress={() => { tap(); setExplain(true); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6 }} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }} accessibilityRole="button" accessibilityLabel="Destekli kullanım hakkı nedir?">
-                  <T.Small>Destekli kullanım hakkın ({monthName(month, false)})</T.Small>
+                <TouchableOpacity onPress={() => { tap(); setExplain(true); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6 }} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }} accessibilityRole="button" accessibilityLabel="Ucuz fiyat limiti nedir?">
+                  <T.Small>Ucuz fiyat limiti ({monthName(month, false)})</T.Small>
                   <HelpCircle size={14} color={C.textDim} />
                 </TouchableOpacity>
                 <T.Small color={x.forecast.measured > limit ? C.danger : C.text}>{m3(x.forecast.measured)} / {m3(limit)}</T.Small>
@@ -308,7 +308,7 @@ function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
               })() : null}
               {b?.gas?.tier === 2 && x.forecast.measured <= limit ? (
                 <T.Small color={C.ok} style={{ marginTop: 8 }}>
-                  Hakkında kalırsan bu ay ~{tl(billFor(bundle, 'gas', province, month, limit, cal).total)} ödersin (tahmine göre {tl(b.total - billFor(bundle, 'gas', province, month, limit, cal).total)} az).
+                  Limitin altında kalırsan bu ay ~{tl(billFor(bundle, 'gas', province, month, limit, cal).total)} ödersin (tahmine göre {tl(b.total - billFor(bundle, 'gas', province, month, limit, cal).total)} az).
                 </T.Small>
               ) : null}
             </View>
@@ -321,12 +321,12 @@ function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
           <Text style={s.staleText}>Son okuma {daysAgo(last!.date)}. Doğru tahmin için şimdi oku.</Text>
         </TouchableOpacity>
       ) : null}
-      <Sheet visible={explain} onClose={() => setExplain(false)} title="Destekli kullanım hakkı nedir?">
-        <T.Body>Devlet, doğalgazı evlere maliyetinin altında satıyor; aradaki farkı kendisi karşılıyor.</T.Body>
-        <T.Body style={{ marginTop: SPACE.md }}>4 Nisan 2026'dan beri bu destek yalnızca <Text style={{ fontWeight: '800' }}>ilindeki normal tüketime kadar</Text> veriliyor. Normal tüketim, ilinin son 5 yılda aynı ay ortalama bir evin kullandığının %75 fazlası olarak belirleniyor; kışın yükselir, yazın düşer.</T.Body>
-        <T.Body style={{ marginTop: SPACE.md }}>Bu hakkı 1 m³ bile aşarsan o ay desteği <Text style={{ fontWeight: '800' }}>tamamen</Text> kaybedersin: ayın tüm gazı m³ başına yaklaşık {Math.round(gasPerM3(bundle, province, month, 1))} ₺ yerine {Math.round(gasPerM3(bundle, province, month, 2))} ₺'den faturalanır.</T.Body>
-        <T.Body style={{ marginTop: SPACE.md }}>Sayaçla, ayın ortasında tüketim hızına bakıp ay sonunu tahmin eder ve aşmadan önce seni uyarır. Sonraki ay yine hakkında kalırsan destek geri gelir.</T.Body>
-        <T.Small style={{ marginTop: SPACE.md }}>Kaynak: BOTAŞ kademeli konut tarifesi (4 Nisan 2026). Şehit yakınları ve gaziler bu uygulamanın dışındadır.</T.Small>
+      <Sheet visible={explain} onClose={() => setExplain(false)} title="Ucuz fiyat limiti nedir?">
+        <T.Body>Doğalgaz evlere iki fiyattan satılıyor: ucuz fiyat (yaklaşık {Math.round(gasPerM3(bundle, province, month, 1))} ₺/m³) ve pahalı fiyat (yaklaşık {Math.round(gasPerM3(bundle, province, month, 2))} ₺/m³, vergiler dahil).</T.Body>
+        <T.Body style={{ marginTop: SPACE.md }}>Her il için her ay bir limit var. Bu ay {province} limiti <Text style={{ fontWeight: '800' }}>{m3(gasLimit(bundle, province, month))}</Text>. Limitin altında kalırsan ayın tüm gazı ucuz fiyattan hesaplanır.</T.Body>
+        <T.Body style={{ marginTop: SPACE.md }}>Limiti <Text style={{ fontWeight: '800' }}>1 m³ bile aşarsan</Text> o ayın tamamı pahalı fiyattan hesaplanır; sadece aşan kısım değil. Bu yüzden limite yaklaşınca birkaç m³ az kullanmak yüzlerce lira fark yaratabilir.</T.Body>
+        <T.Body style={{ marginTop: SPACE.md }}>Sayaçla tüketim hızına bakıp ay sonunu tahmin eder ve limiti aşmadan önce seni uyarır. Limit her ayın 1'inde sıfırlanır; kışın yükselir, yazın düşer.</T.Body>
+        <T.Small style={{ marginTop: SPACE.md }}>Kaynak: BOTAŞ kademeli konut tarifesi (4 Nisan 2026). Limit, ilin son 5 yıldaki aynı ay ortalama konut tüketiminin %75 fazlasıdır. Şehit yakınları ve gaziler bu uygulamanın dışındadır.</T.Small>
       </Sheet>
     </Card>
   );
@@ -352,12 +352,12 @@ function CentralGasCard({ province, propertyId, onAdd }: { province: string; pro
         <View>
           <T.Body>{monthName(last.month)}: {m3(last.m3)} → {tl(last.amount)}</T.Body>
           <T.Small style={{ marginTop: 6 }}>
-            Merkezi sistemde destekli hak, bina tüketiminin daire sayısına bölünmesiyle hane başına uygulanır.
-            O ay {province} için destekli hakkın {m3(lim)}: {last.m3 > lim ? 'aşılmış — desteksiz fiyattan faturalanmış olmalı.' : 'hakkında kalmışsın.'}
+            Merkezi sistemde limit, bina tüketiminin daire sayısına bölünmesiyle hane başına uygulanır.
+            O ay {province} limiti {m3(lim)}: {last.m3 > lim ? 'aşılmış, pahalı fiyattan faturalanmış olmalı.' : 'limitin altında kalmışsın, ucuz fiyat.'}
           </T.Small>
         </View>
       ) : (
-        <T.Body dim>Merkezi sistemde bireysel sayaç olmadığı için aylık faturanı (hane payı m³ ve tutar) girerek kademe durumunu takip edebilirsin.</T.Body>
+        <T.Body dim>Merkezi sistemde bireysel sayaç olmadığı için aylık faturanı (hane payı m³ ve tutar) girerek limit durumunu takip edebilirsin.</T.Body>
       )}
       <Button kind="secondary" title="Fatura gir" onPress={onAdd} style={{ marginTop: SPACE.md }} />
     </Card>

@@ -68,7 +68,7 @@ export function MeterGuide({ kind, visible, onClose }: { kind: Kind; visible: bo
       <T.Body dim>{WHAT[kind]}</T.Body>
 
       <T.Label style={{ marginTop: SPACE.lg }}>3 · Neden iki kez?</T.Label>
-      <T.Body dim>Sayaç, evin kurulduğundan beri toplam tüketimi gösterir. İlk okuma başlangıç noktasıdır. 3–7 gün sonra tekrar okuduğunda aradaki farktan günlük tüketimini, ay sonu faturanı ve {kind === 'gas' ? 'destekli kullanım hakkına ne kadar kaldığını' : 'tasarruf fırsatlarını'} hesaplarız.</T.Body>
+      <T.Body dim>Sayaç, evin kurulduğundan beri toplam tüketimi gösterir. İlk okuma başlangıç noktasıdır. 3–7 gün sonra tekrar okuduğunda aradaki farktan günlük tüketimini, ay sonu faturanı ve {kind === 'gas' ? 'ucuz fiyat limitine ne kadar kaldığını' : 'tasarruf fırsatlarını'} hesaplarız.</T.Body>
 
       <View style={s.tip}>
         <T.Small color={C.text}>İpucu: Kamerayı rakamlara yaklaştır, karanlıksa flaşı aç. Okunan değeri her zaman kaydetmeden önce kontrol edebilirsin.</T.Small>
