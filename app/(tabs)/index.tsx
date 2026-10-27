@@ -11,8 +11,8 @@ import { useDashboard } from '../../src/hooks/useDashboard';
 import { useVerim, useTariffs } from '../../src/store/useVerim';
 import { TypeSummary, Tip, latestCalibration } from '../../src/engine/summary';
 import { Insight } from '../../src/engine/insights';
-import { gasLimit, billFor, gasBillRaw } from '../../src/engine/bills';
-import { monthKey } from '../../src/engine/consumption';
+import { gasLimit, billFor, gasBillRaw, periodGasLimit } from '../../src/engine/bills';
+import { monthKey, billingPeriod } from '../../src/engine/consumption';
 import { tl, m3, pct, monthName, daysAgo } from '../../src/utils/format';
 import { notifyNow, scheduleTierFollowUp, scheduleNextLimitNotice, syncWeeklyHeatingReminder } from '../../src/services/notify';
 import { protectedSavings } from '../../src/engine/insights';
@@ -248,13 +248,18 @@ function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
   s: TypeSummary; province: string; bundle: any; readings: { date: string; index: number }[]; info?: Insight; onScan: () => void;
 }) {
   const [explain, setExplain] = useState(false);
+  const router = useRouter();
   const activeProp = useVerim(st => st.properties.find(p => p.id === st.activePropertyId));
   const color = typeColor(x.type);
   const Icon = x.type === 'water' ? Droplet : Flame;
   const last = [...readings].sort((a, b) => b.date.localeCompare(a.date))[0];
   const stale = last && Date.now() - new Date(last.date).getTime() > 30 * 86_400_000;
   const month = monthKey(new Date());
-  const limit = x.type === 'gas' ? gasLimit(bundle, province, month) : null;
+  const period = x.type === 'gas' && activeProp?.gasMode !== 'central' ? billingPeriod(new Date(), activeProp?.billReadDay) : null;
+  const limit = x.type === 'gas' ? (period ? periodGasLimit(bundle, province, period.start, period.end) : gasLimit(bundle, province, month)) : null;
+  const periodLabel = period
+    ? `${period.start.getDate()} ${monthName(monthKey(period.start), false).slice(0, 3)} – ${new Date(period.end.getTime() - 86_400_000).getDate()} ${monthName(monthKey(new Date(period.end.getTime() - 86_400_000)), false).slice(0, 3)}`
+    : monthName(month, false);
   const b = x.projectedBill;
   const allBills = useVerim(st => st.bills);
   const activeId = useVerim(st => st.activePropertyId);
@@ -277,7 +282,7 @@ function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
         <View>
           <View style={s.typeNums}>
             <View>
-              <T.Small>Ay sonu tahmini</T.Small>
+              <T.Small>{period ? 'Dönem sonu tahmini' : 'Ay sonu tahmini'}</T.Small>
               <Text style={[s.typeBig, { color }]}>{tl(b!.total)}</Text>
               <T.Small>{m3(x.forecast.projected)} · şu ana kadar {tl(x.soFarBill?.total ?? 0)}</T.Small>
             </View>
@@ -302,7 +307,7 @@ function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
             <View style={{ marginTop: SPACE.lg }}>
               <View style={s.rowBetween}>
                 <TouchableOpacity onPress={() => { tap(); setExplain(true); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6 }} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }} accessibilityRole="button" accessibilityLabel="Ucuz fiyat limiti nedir?">
-                  <T.Small>Ucuz fiyat limiti ({monthName(month, false)})</T.Small>
+                  <T.Small>Ucuz fiyat limiti ({periodLabel})</T.Small>
                   <HelpCircle size={14} color={C.textDim} />
                 </TouchableOpacity>
                 <T.Small color={x.forecast.measured > limit ? C.danger : C.text}>{m3(x.forecast.measured)} / {m3(limit)}</T.Small>
@@ -313,13 +318,18 @@ function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
                   marker={x.forecast.reliable || x.basis === 'bill' ? Math.min(1, x.forecast.projected / limit) : undefined} />
               </View>
               {info ? <T.Small style={{ marginTop: 8 }}>{info.body}</T.Small> : null}
+              {!period && activeProp ? (
+                <TouchableOpacity onPress={() => { tap(); router.push({ pathname: '/property', params: { id: activeProp.id } }); }} style={{ paddingVertical: 8 }} accessibilityRole="button">
+                  <T.Small color={C.brand}>Faturan ayın kaçında okunuyor? Gir, limit tam fatura dönemine göre hesaplansın →</T.Small>
+                </TouchableOpacity>
+              ) : null}
               {x.forecast.reliable ? (() => {
                 const cmp = compareToAverage(x.forecast.projected, limit, province, activeProp?.home);
                 return cmp ? <T.Small color={cmp.ratio > 1.1 ? C.warn : C.textDim} style={{ marginTop: 8 }}>{cmp.sentence}</T.Small> : null;
               })() : null}
               {b?.gas?.tier === 2 && x.forecast.measured <= limit ? (
                 <T.Small color={C.ok} style={{ marginTop: 8 }}>
-                  Limitin altında kalırsan bu ay ~{tl(billFor(bundle, 'gas', province, month, limit, cal).total)} ödersin (tahmine göre {tl(b.total - billFor(bundle, 'gas', province, month, limit, cal).total)} az).
+                  Limitin altında kalırsan {period ? 'bu dönem' : 'bu ay'} ~{tl(billFor(bundle, 'gas', province, month, limit, cal, limit).total)} ödersin (tahmine göre {tl(b.total - billFor(bundle, 'gas', province, month, limit, cal, limit).total)} az).
                 </T.Small>
               ) : null}
             </View>

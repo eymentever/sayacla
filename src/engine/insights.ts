@@ -1,9 +1,9 @@
 // Kullanıcıya para kazandıran içgörüler: kademe uyarısı, anomali, kaçak testi.
 
 import { Reading, UtilityType } from './types';
-import { buildIntervals, forecastMonth, monthlyUsage, monthKey } from './consumption';
+import { buildIntervals, forecastMonth, forecastPeriod, monthlyUsage, monthKey, BillingPeriod } from './consumption';
 import { TariffBundle } from './tariffs';
-import { gasBillRaw, gasLimit, Calibration } from './bills';
+import { gasBillRaw, gasLimit, periodGasLimit, Calibration } from './bills';
 import { d1, d0 } from './fmt';
 
 export type Level = 'info' | 'warning' | 'critical';
@@ -23,18 +23,24 @@ const r0 = (n: number) => Math.round(n);
 
 /** Gaz kademe: ay sonu tahmini limiti aşacak mı, kaç m³ kaldı, aşarsa ne kadar fazla ödenir. */
 export function gasTierInsight(
-  readings: Reading[], bundle: TariffBundle, province: string, now = new Date(), cal?: Calibration,
+  readings: Reading[], bundle: TariffBundle, province: string, now = new Date(), cal?: Calibration, period?: BillingPeriod | null,
 ): Insight | null {
-  const fc = forecastMonth(readings, 'gas', now);
+  const fc = period ? forecastPeriod(readings, 'gas', period, now) : forecastMonth(readings, 'gas', now);
   if (fc.measured === 0 && !fc.reliable) return null;
   const month = monthKey(now);
-  const limit = gasLimit(bundle, province, month);
+  const limit = period ? periodGasLimit(bundle, province, period.start, period.end) : gasLimit(bundle, province, month);
   if (!Number.isFinite(limit)) return null;
   const f = cal?.factor ?? 1;
   const remaining = limit - fc.measured;
-  const daysLeft = Math.max(0, fc.daysInMonth - now.getDate());
-  const atLimitK1 = gasBillRaw(bundle, province, month, limit).total * f;
-  const justOverK2 = gasBillRaw(bundle, province, month, limit + 0.01).total * f;
+  const daysLeft = period
+    ? Math.max(0, Math.ceil((period.end.getTime() - now.getTime()) / 86_400_000))
+    : Math.max(0, fc.daysInMonth - now.getDate());
+  // Dil: fatura dönemi biliniyorsa "bu dönem", bilinmiyorsa takvim ayı
+  const W = period
+    ? { now: 'Bu fatura döneminde', end: 'dönem sonunda', until: 'Sayaç okunana kadar', whole: 'dönemin', reset: 'Limit her fatura döneminde sıfırlanır.', next: 'gelecek dönem', thisLimit: 'bu dönemki' }
+    : { now: 'Bu ay', end: 'ay sonunda', until: 'Ay sonuna kadar', whole: 'ayın', reset: 'Limit her ayın 1\'inde sıfırlanır.', next: 'gelecek ay', thisLimit: 'bu ayki' };
+  const atLimitK1 = gasBillRaw(bundle, province, month, limit, undefined, limit).total * f;
+  const justOverK2 = gasBillRaw(bundle, province, month, limit + 0.01, undefined, limit).total * f;
   const penalty = justOverK2 - atLimitK1;
 
   if (fc.measured > limit) {
@@ -42,10 +48,10 @@ export function gasTierInsight(
     const extra = (gasBillRaw(bundle, province, month, m3End, 2).total - gasBillRaw(bundle, province, month, m3End, 1).total) * f;
     return {
       id: 'gas-tier-exceeded', type: 'gas', level: 'critical',
-      title: 'Bu ay doğalgaz pahalı fiyattan hesaplanacak',
-      body: `Bu ay ${d1(fc.measured)} m³ kullandın; ${province} için aylık ucuz fiyat limiti ${d1(limit)} m³. ` +
-        `Limit aşıldığı için ayın tüm gazı pahalı fiyattan hesaplanır; bu sana yaklaşık ${d0(extra)} TL ek maliyet.`,
-      action: 'Limit her ayın 1\'inde sıfırlanır. Ay sonuna kadar her 1 °C düşüş yine faturayı azaltır; gelecek ay limitin altında kalman için seni zamanında uyaracağız.',
+      title: `${W.now} doğalgaz pahalı fiyattan hesaplanacak`,
+      body: `${W.now} ${d1(fc.measured)} m³ kullandın; ${province} için ucuz fiyat limiti ${d1(limit)} m³. ` +
+        `Limit aşıldığı için ${W.whole} tüm gazı pahalı fiyattan hesaplanır; bu sana yaklaşık ${d0(extra)} TL ek maliyet.`,
+      action: `${W.reset} ${W.until} her 1 °C düşüş yine faturayı azaltır; ${W.next} limitin altında kalman için seni zamanında uyaracağız.`,
       impactTL: r0(extra),
     };
   }
@@ -54,12 +60,12 @@ export function gasTierInsight(
     return {
       id: 'gas-tier-risk', type: 'gas', level: 'warning',
       title: `Ucuz fiyat limitine ${d1(remaining)} m³ kaldı`,
-      body: `Bu hızla ay sonunda ~${d0(fc.projected)} m³ kullanacaksın; limit ${d1(limit)} m³. ` +
-        `Limiti 1 m³ bile aşarsan ayın tüm gazı pahalı fiyattan hesaplanır ve faturan yaklaşık ${d0(penalty)} TL artar.`,
+      body: `Bu hızla ${W.end} ~${d0(fc.projected)} m³ kullanacaksın; limit ${d1(limit)} m³. ` +
+        `Limiti 1 m³ bile aşarsan ${W.whole} tüm gazı pahalı fiyattan hesaplanır ve faturan yaklaşık ${d0(penalty)} TL artar.`,
       action: daysLeft <= 0 ? undefined
         : fc.measured > 0 && perDayBudget < 0.4 * ((fc.projected - fc.measured) / Math.max(1, daysLeft))
           ? `Ucuz fiyatta kalmak için günde ${d1(perDayBudget)} m³'e inmen gerekir; bu, şu anki tüketiminin çok altında. Yine de kombiyi 1–2 °C düşürmek ve gece kısmak faturayı belirgin şekilde azaltır.`
-          : `Ay sonuna kadar günde en fazla ${d1(perDayBudget)} m³ kullanırsan ucuz fiyatta kalırsın.`,
+          : `${W.until} günde en fazla ${d1(perDayBudget)} m³ kullanırsan ucuz fiyatta kalırsın.`,
       impactTL: r0(penalty),
     };
   }
@@ -67,7 +73,7 @@ export function gasTierInsight(
     return {
       id: 'gas-tier-ok', type: 'gas', level: 'info',
       title: `Ucuz fiyattasın — limite ${d1(remaining)} m³ var`,
-      body: `${province} için bu ayki ucuz fiyat limiti ${d1(limit)} m³. Ay sonu tahminin ~${d0(fc.projected)} m³.`,
+      body: `${province} için ${W.thisLimit} ucuz fiyat limiti ${d1(limit)} m³. ${W.end[0].toUpperCase() + W.end.slice(1)} tahminin ~${d0(fc.projected)} m³.`,
     };
   }
   return null;
@@ -120,10 +126,10 @@ export function leakTestResult(startIndex: number, endIndex: number, minutes: nu
 }
 
 export function allInsights(
-  readings: Reading[], bundle: TariffBundle, province: string, now = new Date(), gasCal?: Calibration,
+  readings: Reading[], bundle: TariffBundle, province: string, now = new Date(), gasCal?: Calibration, gasPeriod?: BillingPeriod | null,
 ): Insight[] {
   const out: (Insight | null)[] = [
-    gasTierInsight(readings, bundle, province, now, gasCal),
+    gasTierInsight(readings, bundle, province, now, gasCal, gasPeriod),
     anomalyInsight(readings, 'water', now),
     anomalyInsight(readings, 'gas', now),
   ];

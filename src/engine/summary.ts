@@ -1,9 +1,9 @@
 // Ana sayfa özeti: bu ay tahmini fatura, geçen ayla kıyas, kişisel ve TL bazlı tasarruf önerileri.
 
 import { Reading, UtilityType, BillEstimate } from './types';
-import { buildIntervals, monthlyUsage, forecastMonth, monthKey, MonthForecast, daysInMonth } from './consumption';
+import { buildIntervals, monthlyUsage, forecastMonth, forecastPeriod, monthKey, MonthForecast, daysInMonth, BillingPeriod } from './consumption';
 import { TariffBundle } from './tariffs';
-import { billFor, Calibration, gasLimit, calibrationFactor, inferGasTier } from './bills';
+import { billFor, Calibration, gasLimit, periodGasLimit, calibrationFactor, inferGasTier } from './bills';
 import { d1, d0 } from './fmt';
 
 /** Kullanıcının girdiği gerçek fatura (kalibrasyon + "geçen ay ne ödedim" için) */
@@ -78,15 +78,19 @@ export function latestCalibration(bills: PaidBill[], type: UtilityType, bundle: 
 
 export function summarize(
   readings: Reading[], bills: PaidBill[], type: UtilityType, bundle: TariffBundle, province: string, now = new Date(),
+  period?: BillingPeriod | null,
 ): TypeSummary {
   const rs = readings.filter(r => r.type === type);
-  const fc = forecastMonth(rs, type, now);
+  const usePeriod = type === 'gas' && !!period;
+  const fc = usePeriod ? forecastPeriod(rs, type, period!, now) : forecastMonth(rs, type, now);
+  /** Doğalgaz limiti: fatura dönemi biliniyorsa döneme göre, değilse takvim ayına göre */
+  const lim = usePeriod ? periodGasLimit(bundle, province, period!.start, period!.end) : undefined;
   const cal = latestCalibration(bills, type, bundle, province);
   const month = monthKey(now);
   const hasData = buildIntervals(rs, type).length > 0;
 
-  let projectedBill = hasData ? billFor(bundle, type, province, month, fc.projected, cal) : null;
-  const soFarBill = hasData ? billFor(bundle, type, province, month, fc.measured, cal) : null;
+  let projectedBill = hasData ? billFor(bundle, type, province, month, fc.projected, cal, lim) : null;
+  const soFarBill = hasData ? billFor(bundle, type, province, month, fc.measured, cal, lim) : null;
   let basis: TypeSummary['basis'] = hasData ? 'readings' : null;
   if (!fc.reliable) {
     const bp = billBasedProjection(bills, type, bundle, province, now);
@@ -95,7 +99,7 @@ export function summarize(
       const remainingShare = Math.max(0, fc.daysInMonth - fc.coveredDays) / fc.daysInMonth;
       const m3 = fc.measured + bp.m3 * remainingShare;
       fc.projected = m3;
-      projectedBill = billFor(bundle, type, province, month, m3, cal);
+      projectedBill = billFor(bundle, type, province, month, m3, cal, lim);
       basis = 'bill';
     }
   }
@@ -123,7 +127,7 @@ export function summarize(
     if (type === 'gas' && projectedBill.gas) {
       const lastTier = lastMonth.isActual ? inferGasTier(bundle, province, pm, lastMonth.m3, lastMonth.amount) : (lastMonth.m3 > gasLimit(bundle, province, pm) ? 2 : 1);
       if (projectedBill.gas.tier !== lastTier) parts.push(projectedBill.gas.tier === 2
-        ? (fc.measured > gasLimit(bundle, province, month) ? 'limit aşıldı, pahalı fiyat' : 'pahalı fiyata geçme riski')
+        ? (fc.measured > (lim ?? gasLimit(bundle, province, month)) ? 'limit aşıldı, pahalı fiyat' : 'pahalı fiyata geçme riski')
         : 'ucuz fiyata dönüş');
     }
     if (type === 'gas') {
@@ -146,9 +150,9 @@ function linearSaving(bill: BillEstimate | null, m3: number, cutM3: number, fixe
 }
 
 /** Kademe sınırı önerileri için: gerçek tarife farkı (kademe atlaması dahil). */
-function savingOf(bundle: TariffBundle, type: UtilityType, province: string, month: string, m3: number, cutM3: number, cal?: Calibration) {
+function savingOf(bundle: TariffBundle, type: UtilityType, province: string, month: string, m3: number, cutM3: number, cal?: Calibration, lim?: number) {
   if (m3 <= 0 || cutM3 <= 0) return 0;
-  return billFor(bundle, type, province, month, m3, cal).total - billFor(bundle, type, province, month, Math.max(0, m3 - cutM3), cal).total;
+  return billFor(bundle, type, province, month, m3, cal, lim).total - billFor(bundle, type, province, month, Math.max(0, m3 - cutM3), cal, lim).total;
 }
 
 const isHeatingMonth = (m0: number) => m0 >= 9 || m0 <= 3; // Ekim–Nisan
@@ -159,23 +163,25 @@ const isHeatingMonth = (m0: number) => m0 >= 9 || m0 <= 3; // Ekim–Nisan
  */
 export function savingsTips(
   readings: Reading[], bills: PaidBill[], bundle: TariffBundle, province: string, householdSize: number, now = new Date(),
+  gasPeriod?: BillingPeriod | null,
 ): Tip[] {
   const month = monthKey(now);
   const tips: Tip[] = [];
 
   // ── Doğalgaz ──
-  const g = summarize(readings, bills, 'gas', bundle, province, now);
+  const g = summarize(readings, bills, 'gas', bundle, province, now, gasPeriod);
   const gCal = latestCalibration(bills, 'gas', bundle, province);
   const gM3 = g.forecast.projected;
   if (g.hasData && gM3 > 0) {
-    const limit = gasLimit(bundle, province, month);
+    const lim = gasPeriod ? periodGasLimit(bundle, province, gasPeriod.start, gasPeriod.end) : undefined;
+    const limit = lim ?? gasLimit(bundle, province, month);
     if (Number.isFinite(limit) && gM3 > limit && gM3 < limit * 1.35) {
       const cut = gM3 - limit + 0.5;
       tips.push({
         id: 'gas-stay-k1', type: 'gas', effort: 'kolay',
         title: `${d1(cut)} m³ az kullan, ucuz fiyatta kal`,
-        body: `Ay sonu tahminin ${d1(gM3)} m³, limit ${d1(limit)} m³. Limitin altında kalırsan ayın tüm gazı ucuz fiyattan hesaplanır.`,
-        monthlyTL: r0(savingOf(bundle, 'gas', province, month, gM3, cut, gCal)),
+        body: `${gasPeriod ? 'Dönem' : 'Ay'} sonu tahminin ${d1(gM3)} m³, limit ${d1(limit)} m³. Limitin altında kalırsan ${gasPeriod ? 'dönemin' : 'ayın'} tüm gazı ucuz fiyattan hesaplanır.`,
+        monthlyTL: r0(savingOf(bundle, 'gas', province, month, gM3, cut, gCal, lim)),
       });
     }
     if (isHeatingMonth(now.getMonth())) {

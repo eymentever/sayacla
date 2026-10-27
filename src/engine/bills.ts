@@ -20,12 +20,24 @@ export function gasLimit(bundle: TariffBundle, province: string, month: string):
   return p ? p.limits[monthIdx(month)] : Infinity;
 }
 
+/** Fatura dönemi limiti: dönemdeki her günün, o ayın günlük limitinin (aylık limit / ayın gün sayısı) toplamı. */
+export function periodGasLimit(bundle: TariffBundle, province: string, start: Date, end: Date): number {
+  const p = bundle.gas.provinces[province];
+  if (!p) return Infinity;
+  let sum = 0;
+  for (let d = new Date(start); d < end; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) {
+    const dim = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    sum += p.limits[d.getMonth()] / dim;
+  }
+  return Math.round(sum * 10) / 10;
+}
+
 /** Ham (kalibrasyonsuz) gaz faturası. forceTier verilirse limit yerine o kademe uygulanır. */
-export function gasBillRaw(bundle: TariffBundle, province: string, month: string, m3: number, forceTier?: 1 | 2) {
+export function gasBillRaw(bundle: TariffBundle, province: string, month: string, m3: number, forceTier?: 1 | 2, limitOverride?: number) {
   const n = bundle.gas.national;
   const p = bundle.gas.provinces[province];
   const skb = p?.skbPerM3 ?? 3.0;
-  const limit = gasLimit(bundle, province, month);
+  const limit = limitOverride ?? gasLimit(bundle, province, month);
   const tier: 1 | 2 = forceTier ?? (m3 > limit ? 2 : 1);
   const unit = tier === 1 ? n.k1 : n.k2;
   const energy = m3 * unit;
@@ -36,9 +48,9 @@ export function gasBillRaw(bundle: TariffBundle, province: string, month: string
 }
 
 export function gasBill(
-  bundle: TariffBundle, province: string, month: string, m3: number, cal?: Calibration,
+  bundle: TariffBundle, province: string, month: string, m3: number, cal?: Calibration, limit?: number,
 ): BillEstimate {
-  const b = gasBillRaw(bundle, province, month, Math.max(0, m3));
+  const b = gasBillRaw(bundle, province, month, Math.max(0, m3), undefined, limit);
   const f = cal?.factor ?? 1;
   const lines: BillLine[] = [
     { label: `Gaz bedeli (${b.tier === 1 ? 'ucuz' : 'pahalı'} fiyat, ${b.unit.toFixed(3).replace('.', ',')} TL/Sm³)`, amount: r2(b.energy * f) },
@@ -142,7 +154,7 @@ export function calibrate(
 }
 
 export function billFor(
-  bundle: TariffBundle, type: 'water' | 'gas', province: string, month: string, m3: number, cal?: Calibration,
+  bundle: TariffBundle, type: 'water' | 'gas', province: string, month: string, m3: number, cal?: Calibration, gasLimitOverride?: number,
 ): BillEstimate {
-  return type === 'gas' ? gasBill(bundle, province, month, m3, cal) : waterBill(bundle, province, month, m3, cal);
+  return type === 'gas' ? gasBill(bundle, province, month, m3, cal, gasLimitOverride) : waterBill(bundle, province, month, m3, cal);
 }

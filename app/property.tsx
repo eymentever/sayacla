@@ -17,10 +17,11 @@ export default function PropertyScreen() {
   const [province, setProvince] = useState(existing?.province ?? '');
   const [district, setDistrict] = useState(existing?.district ?? '');
   const [hasWater, setHasWater] = useState(existing?.hasWater ?? true);
+  const [readDay, setReadDay] = useState<string>(existing?.billReadDay ? String(existing.billReadDay) : 'Bilmiyorum (takvim ayı)');
   const [gas, setGas] = useState<'meter' | 'central' | 'none'>(existing ? (existing.hasGas ? existing.gasMode ?? 'meter' : 'none') : 'meter');
 
   const save = () => {
-    const data = { name: name.trim() || 'Evim', province, district, hasWater, hasGas: gas !== 'none', gasMode: gas === 'central' ? 'central' as const : 'meter' as const };
+    const data = { name: name.trim() || 'Evim', province, district, hasWater, hasGas: gas !== 'none', gasMode: gas === 'central' ? 'central' as const : 'meter' as const, billReadDay: gas === 'meter' && readDay !== 'Bilmiyorum (takvim ayı)' ? Number(readDay) : undefined };
     if (existing) st.updateProperty(existing.id, data); else st.addProperty(data);
     router.back();
   };
@@ -54,6 +55,13 @@ export default function PropertyScreen() {
         { value: 'meter', label: 'Kombi', color: C.gas }, { value: 'central', label: 'Merkezi', color: C.gas }, { value: 'none', label: 'Yok', color: C.gas },
       ]} />
       <T.Small style={{ marginTop: 8, marginBottom: SPACE.lg }}>Kartlı sayaçlar "Kombi" kapsamındadır. Merkezi sistemde fatura girerek limit takibi yapılır.</T.Small>
+      {gas === 'meter' ? (
+        <>
+          <Picker label="Doğalgaz faturası ayın kaçında okunuyor?" value={readDay}
+            options={['Bilmiyorum (takvim ayı)', ...Array.from({ length: 28 }, (_, i) => String(i + 1))]} onChange={setReadDay} />
+          <T.Small style={{ marginTop: -SPACE.sm, marginBottom: SPACE.lg }}>Faturada "okuma tarihi" yazar. Girersen limit, fatura dönemine göre (ör. 15'inden 15'ine) hesaplanır; uyarılar tam o döneme göre gelir.</T.Small>
+        </>
+      ) : null}
 
       {existing && existing.id !== st.activePropertyId && (
         <Button kind="secondary" title="Bu evi aktif yap" onPress={() => { st.setActiveProperty(existing.id); router.back(); }} style={{ marginBottom: SPACE.sm }} />

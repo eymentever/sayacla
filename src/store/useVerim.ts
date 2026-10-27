@@ -18,6 +18,8 @@ export interface Property {
   hasGas: boolean;
   /** 'meter' → kendi gaz sayacı (kombi, kartlı dahil) · 'central' → merkezi sistem, yalnızca fatura girilir */
   gasMode?: 'meter' | 'central';
+  /** Doğalgaz sayacının fatura için okunduğu gün (1–28). Yoksa takvim ayı kullanılır. */
+  billReadDay?: number;
   /** "Neden fazla kullanıyorum?" ev profili */
   home?: HomeProfile;
 }

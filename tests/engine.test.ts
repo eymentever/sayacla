@@ -223,3 +223,26 @@ test('ilk gün: okuma yokken son faturadan mevsime göre tahmin', () => {
   assert.ok(s.hasData && s.projectedBill && s.projectedBill.total > 0);
   assert.equal(billBasedProjection(bills, 'gas', DEFAULT_BUNDLE, 'Ankara', new Date(2027, 3, 1)), null); // 3 aydan eski
 });
+
+import { billingPeriod, forecastPeriod } from '../src/engine/consumption';
+import { periodGasLimit } from '../src/engine/bills';
+test('fatura dönemi: 15inden 15ine, limit günlük orantılı, uyarı döneme göre', () => {
+  const now = new Date(2026, 10, 20); // 20 Kasım
+  const p = billingPeriod(now, 15)!;
+  assert.equal(p.start.getDate(), 15); assert.equal(p.start.getMonth(), 10); assert.equal(p.end.getMonth(), 11);
+  const before = billingPeriod(new Date(2026, 10, 3), 15)!;
+  assert.equal(before.start.getMonth(), 9); // 15 Ekim – 15 Kasım
+  const lim = periodGasLimit(B, 'Ankara', before.start, before.end);
+  const lo = gasLimit(B, 'Ankara', '2026-10'), ln = gasLimit(B, 'Ankara', '2026-11');
+  assert.ok(Math.abs(lim - (lo / 31 * 17 + ln / 30 * 14)) < 0.1);
+  const rs: Reading[] = [
+    { id: '1', propertyId: 'p', type: 'gas', date: new Date(2026, 10, 15).toISOString(), index: 1000, source: 'manual' },
+    { id: '2', propertyId: 'p', type: 'gas', date: new Date(2026, 10, 20).toISOString(), index: 1020, source: 'manual' },
+  ];
+  const fc = forecastPeriod(rs, 'gas', p, now);
+  assert.ok(Math.abs(fc.measured - 20) < 0.01);
+  assert.ok(Math.abs(fc.projected - (20 + (p.days - 5) * 4)) < 0.01);
+  const ins = gasTierInsight(rs, B, 'Ankara', now, undefined, p);
+  assert.ok(ins && /fatura döneminde|dönem sonunda|bu dönemki|Dönem sonunda/i.test(ins.title + ins.body));
+  assert.equal(billingPeriod(now, undefined), null);
+});

@@ -10,8 +10,8 @@ import { Screen, Header, Card, T, Button, Segmented, Sheet, Row, Badge, tap } fr
 import { useVerim, useActiveProperty, useTariffs } from '../../src/store/useVerim';
 import { UtilityType, Reading } from '../../src/engine/types';
 import { validateNewReading, parseMeterInput, Check as VCheck } from '../../src/engine/validation';
-import { forecastMonth, sortReadings, monthKey } from '../../src/engine/consumption';
-import { billFor } from '../../src/engine/bills';
+import { forecastMonth, forecastPeriod, billingPeriod, sortReadings, monthKey } from '../../src/engine/consumption';
+import { billFor, periodGasLimit } from '../../src/engine/bills';
 import { latestCalibration } from '../../src/engine/summary';
 import { readMeter, ocrAvailable } from '../../src/services/ocr';
 import { MeterGuide } from '../../src/ui/MeterGuide';
@@ -83,15 +83,17 @@ export default function Scan() {
     if (!prop || !confirm || !Number.isFinite(confirm.value) || confirm.check.severity === 'error') return null;
     const date = when === 'now' ? new Date() : new Date(Date.now() - 86_400_000);
     const next: Reading[] = [...mine, { id: 'tmp', propertyId: prop.id, type, date: date.toISOString(), index: confirm.value, source: 'manual', meterReset: reset || undefined }];
-    const fc = forecastMonth(next, type);
+    const per = type === 'gas' ? billingPeriod(new Date(), prop.billReadDay) : null;
+    const fc = per ? forecastPeriod(next, type, per) : forecastMonth(next, type);
+    const lim = per ? periodGasLimit(bundle, prop.province, per.start, per.end) : undefined;
     const cal = latestCalibration(bills.filter(b => b.propertyId === prop.id), type, bundle, prop.province);
     const month = monthKey(new Date());
     const since = last && !reset ? confirm.value - last.index : null;
     const days = last && !reset ? Math.max(0.04, (date.getTime() - new Date(last.date).getTime()) / 86_400_000) : null;
     return {
       since, days,
-      soFar: fc.measured > 0 ? billFor(bundle, type, prop.province, month, fc.measured, cal) : null,
-      projected: fc.reliable ? billFor(bundle, type, prop.province, month, fc.projected, cal) : null,
+      soFar: fc.measured > 0 ? billFor(bundle, type, prop.province, month, fc.measured, cal, lim) : null,
+      projected: fc.reliable ? billFor(bundle, type, prop.province, month, fc.projected, cal, lim) : null,
       fc,
     };
   }, [confirm, mine, when, reset, bills, bundle, prop, type, last]);
@@ -291,8 +293,8 @@ export default function Scan() {
                 {preview?.since != null && preview.days != null && (
                   <Row label={`Son okumadan beri (${preview.days < 1 ? '1 günden az' : Math.round(preview.days) + ' gün'})`} value={m3(preview.since, 3)} />
                 )}
-                {preview?.soFar && <Row label="Bu ay şu ana kadar" value={`${m3(preview.fc.measured)} · ${tl(preview.soFar.total)}`} />}
-                {preview?.projected && <Row label="Ay sonu tahmini" value={tl(preview.projected.total)} bold valueColor={color} />}
+                {preview?.soFar && <Row label={type === 'gas' && prop.billReadDay ? 'Bu dönem şu ana kadar' : 'Bu ay şu ana kadar'} value={`${m3(preview.fc.measured)} · ${tl(preview.soFar.total)}`} />}
+                {preview?.projected && <Row label={type === 'gas' && prop.billReadDay ? 'Dönem sonu tahmini' : 'Ay sonu tahmini'} value={tl(preview.projected.total)} bold valueColor={color} />}
                 {preview?.projected?.gas && (
                   <Row label="Doğalgaz fiyatı (ay sonu)" value={preview.projected.gas.tier === 1 ? 'Ucuz fiyat' : 'Pahalı fiyat — limit aşılıyor'} valueColor={preview.projected.gas.tier === 2 ? C.danger : C.ok} />
                 )}

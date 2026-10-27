@@ -118,3 +118,37 @@ export function forecastMonth(
     reliable: rate != null && ivs.reduce((s, i) => s + i.days, 0) >= 3 && staleDays <= 45,
   };
 }
+
+// ── Fatura dönemi ───────────────────────────────────────────────────────────
+// Dağıtım şirketi sayacı her ay yaklaşık aynı gün okur; limit o döneme uygulanır.
+
+export interface BillingPeriod { start: Date; end: Date; days: number }
+
+/** readDay (1–28) verilirse içinde bulunulan fatura dönemi; yoksa null (takvim ayı kullanılır). */
+export function billingPeriod(now: Date, readDay?: number): BillingPeriod | null {
+  if (!readDay || readDay < 1 || readDay > 28) return null;
+  const y = now.getFullYear(), m = now.getMonth();
+  const start = now.getDate() >= readDay ? new Date(y, m, readDay) : new Date(y, m - 1, readDay);
+  const end = new Date(start.getFullYear(), start.getMonth() + 1, readDay);
+  return { start, end, days: Math.round((end.getTime() - start.getTime()) / DAY) };
+}
+
+/** Dönem içindeki ölçülen tüketim + kalan günler için güncel hızla tahmin (forecastMonth ile aynı biçim). */
+export function forecastPeriod(readings: Reading[], type: UtilityType, p: BillingPeriod, now: Date = new Date()): MonthForecast {
+  const ivs = buildIntervals(readings, type);
+  const ps = p.start.getTime(), pe = Math.min(p.end.getTime(), now.getTime());
+  let measured = 0, covered = 0;
+  for (const iv of ivs) {
+    const a = Math.max(ps, new Date(iv.start).getTime()), b = Math.min(pe, new Date(iv.end).getTime());
+    if (b > a) { const d = (b - a) / DAY; measured += d * iv.perDay; covered += d; }
+  }
+  const rate = recentPerDay(ivs);
+  const rs = sortReadings(readings.filter(r => r.type === type));
+  const last = rs[rs.length - 1];
+  const staleDays = last ? (now.getTime() - new Date(last.date).getTime()) / DAY : Infinity;
+  const projected = rate == null ? measured : measured + Math.max(0, p.days - covered) * rate;
+  return {
+    month: monthKey(p.start), measured, projected, coveredDays: covered, daysInMonth: p.days,
+    reliable: rate != null && ivs.reduce((t, i) => t + i.days, 0) >= 3 && staleDays <= 45,
+  };
+}
