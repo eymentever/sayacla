@@ -260,7 +260,7 @@ export default function Scan() {
                 <Text style={s.resetTitle}>Sayaç değişti / sıfırlandı</Text>
                 <T.Small>Yeni sayaç takıldıysa işaretle; bu okuma yeni başlangıç olur.</T.Small>
               </View>
-              <Switch value={reset} onValueChange={setReset} trackColor={{ true: color, false: C.border }} />
+              <Switch accessibilityLabel="Sayaç değişti / sıfırlandı" value={reset} onValueChange={setReset} trackColor={{ true: color, false: C.border }} />
             </View>
           ) : null}
           <Button title="Devam" color={color} disabled={!input} onPress={review} style={{ marginTop: SPACE.lg }} />

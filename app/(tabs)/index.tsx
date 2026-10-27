@@ -290,7 +290,7 @@ function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
           {limit != null && Number.isFinite(limit) && (
             <View style={{ marginTop: SPACE.lg }}>
               <View style={s.rowBetween}>
-                <TouchableOpacity onPress={() => { tap(); setExplain(true); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }} accessibilityRole="button">
+                <TouchableOpacity onPress={() => { tap(); setExplain(true); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6 }} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }} accessibilityRole="button" accessibilityLabel="Destekli kullanım hakkı nedir?">
                   <T.Small>Destekli kullanım hakkın ({monthName(month, false)})</T.Small>
                   <HelpCircle size={14} color={C.textDim} />
                 </TouchableOpacity>

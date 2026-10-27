@@ -46,7 +46,7 @@ export default function PropertyScreen() {
       <Card>
         <View style={s.sw}>
           <Text style={s.swText}>Kendi su sayacım var</Text>
-          <Switch value={hasWater} onValueChange={setHasWater} trackColor={{ true: C.water, false: C.border }} />
+          <Switch accessibilityLabel="Kendi su sayacım var" value={hasWater} onValueChange={setHasWater} trackColor={{ true: C.water, false: C.border }} />
         </View>
       </Card>
       <Text style={s.label}>Doğalgaz</Text>

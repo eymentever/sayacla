@@ -89,7 +89,7 @@ export default function Settings() {
             <Text style={s.switchTitle}>Doğalgaz destek hakkı uyarıları</Text>
             <T.Small>Limiti aşma riski olduğunda ayda en fazla bir kez bildirir.</T.Small>
           </View>
-          <Switch value={st.settings.tierAlerts} trackColor={{ true: C.brand, false: C.border }}
+          <Switch accessibilityLabel="Doğalgaz destek hakkı uyarıları" value={st.settings.tierAlerts} trackColor={{ true: C.brand, false: C.border }}
             onValueChange={async v => { if (v) await ensurePermission(); st.setSettings({ tierAlerts: v }); }} />
         </View>
       </Card>
@@ -100,7 +100,7 @@ export default function Settings() {
             <Text style={s.switchTitle}>Kış sezonu haftalık kontrol</Text>
             <T.Small>Ekim–Nisan her pazar hatırlatır; her ayın 1'inde yeni destekli hakkını bildirir.</T.Small>
           </View>
-          <Switch value={st.settings.weeklyHeating} trackColor={{ true: C.brand, false: C.border }}
+          <Switch accessibilityLabel="Kış sezonu haftalık kontrol" value={st.settings.weeklyHeating} trackColor={{ true: C.brand, false: C.border }}
             onValueChange={async v => { if (v) await ensurePermission(); st.setSettings({ weeklyHeating: v }); }} />
         </View>
       </Card>

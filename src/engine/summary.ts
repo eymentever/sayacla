@@ -88,7 +88,9 @@ export function summarize(
     if (Math.abs(dM3) >= 0.5) parts.push(`tüketim ${dM3 > 0 ? '+' : ''}${d1(dM3)} m³`);
     if (type === 'gas' && projectedBill.gas) {
       const lastTier = lastMonth.isActual ? inferGasTier(bundle, province, pm, lastMonth.m3, lastMonth.amount) : (lastMonth.m3 > gasLimit(bundle, province, pm) ? 2 : 1);
-      if (projectedBill.gas.tier !== lastTier) parts.push(projectedBill.gas.tier === 2 ? 'devlet desteğini kaybetme riski' : 'destekli fiyata dönüş');
+      if (projectedBill.gas.tier !== lastTier) parts.push(projectedBill.gas.tier === 2
+        ? (fc.measured > gasLimit(bundle, province, month) ? 'devlet desteği bu ay kaybedildi (pahalı fiyat)' : 'devlet desteğini kaybetme riski')
+        : 'destekli fiyata dönüş');
     }
     if (type === 'gas') {
       const limNow = gasLimit(bundle, province, month), limPrev = gasLimit(bundle, province, pm);
