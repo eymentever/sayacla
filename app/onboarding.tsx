@@ -7,6 +7,8 @@ import { Screen, Button, Picker, Stepper, Field, T, tap } from '../src/ui';
 import { PROVINCES } from '../src/data/provinces';
 import { ALL_PROVINCES } from '../src/engine/tariffs';
 import { useVerim } from '../src/store/useVerim';
+import { track } from '../src/services/analytics';
+import { ContributeInfo } from '../src/ui/Contribute';
 
 type GasChoice = 'meter' | 'central' | 'none';
 
@@ -21,7 +23,8 @@ export default function Onboarding() {
   const [household, setHousehold] = useState(3);
   const [name, setName] = useState('');
 
-  const finish = () => {
+  const finish = (contribute: boolean) => {
+    useVerim.getState().setSettings({ contribute });
     complete({
       name, householdSize: household,
       property: {
@@ -29,6 +32,7 @@ export default function Onboarding() {
         gasMode: gas === 'central' ? 'central' : 'meter',
       },
     });
+    track('onboarding_done', { province, gas_mode: gas, has_water: hasWater, household, contribute });
     // Korumalı rota onboarding'i kapatır; ardından ilk okumaya yönlendir
     setTimeout(() => router.replace('/scan'), 0);
   };
@@ -36,7 +40,7 @@ export default function Onboarding() {
   return (
     <Screen tabs={false}>
       <View style={s.dots}>
-        {[0, 1, 2].map(i => <View key={i} style={[s.dot, i <= step && { backgroundColor: C.brand, width: 22 }]} />)}
+        {[0, 1, 2, 3].map(i => <View key={i} style={[s.dot, i <= step && { backgroundColor: C.brand, width: 22 }]} />)}
       </View>
 
       {step === 0 && (
@@ -92,8 +96,17 @@ export default function Onboarding() {
           <Stepper label="Evde kaç kişi yaşıyor?" value={household} onChange={setHousehold} />
           <Field label="Adın (isteğe bağlı)" value={name} onChangeText={setName} placeholder="Ör. Eymen" />
 
-          <Button title="Kurulumu bitir" disabled={!hasWater && gas === 'none'} onPress={finish} />
+          <Button title="Devam" disabled={!hasWater && gas === 'none'} onPress={() => setStep(3)} />
           <Button title="Geri" kind="ghost" onPress={() => setStep(1)} style={{ marginTop: SPACE.sm }} />
+        </View>
+      )}
+      {step === 3 && (
+        <View>
+          <T.Title style={s.q}>Son bir şey</T.Title>
+          <ContributeInfo />
+          <Button title="Katkı ver ve başla" onPress={() => finish(true)} style={{ marginTop: SPACE.lg }} />
+          <Button title="Hayır, teşekkürler" kind="ghost" onPress={() => finish(false)} style={{ marginTop: SPACE.sm }} />
+          <Button title="Geri" kind="ghost" onPress={() => setStep(2)} />
         </View>
       )}
     </Screen>

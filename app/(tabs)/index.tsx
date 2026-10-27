@@ -16,6 +16,8 @@ import { monthKey } from '../../src/engine/consumption';
 import { tl, m3, pct, monthName, daysAgo } from '../../src/utils/format';
 import { notifyNow, scheduleTierFollowUp, scheduleNextLimitNotice, syncWeeklyHeatingReminder } from '../../src/services/notify';
 import { protectedSavings } from '../../src/engine/insights';
+import { track } from '../../src/services/analytics';
+import { ContributeCard } from '../../src/ui/Contribute';
 import { diagnose, compareToAverage, combinedGasPct } from '../../src/engine/diagnosis';
 import { Stethoscope, HelpCircle } from 'lucide-react-native';
 import { Shield } from 'lucide-react-native';
@@ -45,6 +47,7 @@ export default function Dashboard() {
     AsyncStorage.getItem(key).then(v => {
       if (v) return;
       AsyncStorage.setItem(key, '1');
+      track('tier_alert', { kind: ins.id, province: d.prop.province });
       notifyNow(ins.title, ins.body, '/').catch(() => {});
     }).catch(() => {});
   }, [d?.insights, tierAlerts]);
@@ -192,6 +195,9 @@ export default function Dashboard() {
           </TouchableOpacity>
         </Card>
       )}
+
+      {/* ── İzinli anonim katkı (bir kez sorulur) ── */}
+      {readings.some(r => r.propertyId === d.prop.id) ? <ContributeCard /> : null}
 
       {/* ── Kalibrasyon ── */}
       {hasAny && needsCalibration && (

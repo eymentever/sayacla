@@ -9,6 +9,7 @@ import { useVerim, useActiveProperty, useTariffs } from '../../src/store/useVeri
 import { syncTariffs } from '../../src/services/tariffSync';
 import { scheduleMonthlyReminder, ensurePermission } from '../../src/services/notify';
 import { dateTR } from '../../src/utils/format';
+import { track } from '../../src/services/analytics';
 
 export default function Settings() {
   const router = useRouter();
@@ -116,6 +117,24 @@ export default function Settings() {
       <T.Label style={s.section}>Veri ve gizlilik</T.Label>
       <Card style={{ paddingVertical: SPACE.sm }}>
         <Row icon={<Shield size={18} color={C.textDim} />} label="Gizlilik politikası" onPress={() => router.push('/privacy')} />
+        <Divider />
+        <View style={s.switchRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.switchTitle}>İl istatistiğine katkı</Text>
+            <T.Small>Tüketimin anonim olarak il ortalamalarına eklenir. Ad, adres, konum, fotoğraf gönderilmez.</T.Small>
+          </View>
+          <Switch accessibilityLabel="İl istatistiğine katkı" value={st.settings.contribute === true} trackColor={{ true: C.brand, false: C.border }}
+            onValueChange={v => { st.setSettings({ contribute: v }); track('consent', { contribute: v, where: 'settings' }); }} />
+        </View>
+        <Divider />
+        <View style={s.switchRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.switchTitle}>Anonim kullanım istatistiği</Text>
+            <T.Small>Hangi özelliklerin kullanıldığını ölçer; uygulamayı geliştirmemize yardım eder.</T.Small>
+          </View>
+          <Switch accessibilityLabel="Anonim kullanım istatistiği" value={st.settings.analytics} trackColor={{ true: C.brand, false: C.border }}
+            onValueChange={v => { if (!v) track('analytics_off'); st.setSettings({ analytics: v }); }} />
+        </View>
         <Divider />
         <Row icon={<Download size={18} color={C.textDim} />} label="Verilerimi dışa aktar" onPress={exportData} />
         <Divider />

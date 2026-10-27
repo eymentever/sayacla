@@ -1,13 +1,15 @@
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { C, FONT, SPACE } from '../src/theme';
 import { Screen, T } from '../src/ui';
 import { PRIVACY_SECTIONS, PRIVACY_UPDATED } from '../src/data/privacy';
+import { useVerim } from '../src/store/useVerim';
 
 export default function Privacy() {
   const router = useRouter();
+  const installId = useVerim(s => s.installId);
   return (
     <Screen tabs={false}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: SPACE.lg }}>
@@ -21,6 +23,7 @@ export default function Privacy() {
           <T.Body dim>{s.p}</T.Body>
         </View>
       ))}
+      <Text selectable style={{ color: C.textDim, fontSize: FONT.sm, marginBottom: SPACE.lg }}>Kuruluma özgü anonim kimliğin: {installId}</Text>
     </Screen>
   );
 }

@@ -16,6 +16,7 @@ import { latestCalibration } from '../../src/engine/summary';
 import { readMeter, ocrAvailable } from '../../src/services/ocr';
 import { MeterGuide } from '../../src/ui/MeterGuide';
 import { scheduleMonthlyReminder, scheduleSecondReading } from '../../src/services/notify';
+import { onReadingSaved, track } from '../../src/services/analytics';
 import { MapPin } from 'lucide-react-native';
 import { Candidate } from '../../src/engine/ocrPick';
 import { tl, m3, num, dateTR } from '../../src/utils/format';
@@ -138,10 +139,12 @@ export default function Scan() {
   const save = () => {
     if (!confirm || confirm.check.severity === 'error') return;
     const date = when === 'now' ? new Date() : new Date(Date.now() - 86_400_000);
-    addReading({
+    const rec = {
       propertyId: prop.id, type, date: date.toISOString(), index: confirm.value,
-      source: candidates && candidates.length ? 'ocr' : 'manual', meterReset: reset || undefined, photoUri: photo ?? undefined,
-    });
+      source: (candidates && candidates.length ? 'ocr' : 'manual') as 'ocr' | 'manual', meterReset: reset || undefined, photoUri: photo ?? undefined,
+    };
+    addReading(rec);
+    onReadingSaved(rec);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     const firstEver = readings.filter(r => r.propertyId === prop.id).length === 0;
     setConfirm(null);
@@ -152,7 +155,8 @@ export default function Scan() {
       setTimeout(() => Alert.alert(
         'İkinci okumayı hatırlatalım mı?',
         'Tüketimini hesaplamak için birkaç gün sonra tekrar okuman gerekiyor. Ayrıca doğalgaz limitine yaklaştığında seni uyarabiliriz.',
-        [{ text: 'Şimdi değil', style: 'cancel' }, { text: 'Hatırlat', onPress: () => {
+        [{ text: 'Şimdi değil', style: 'cancel', onPress: () => track('reminder_prompt', { accepted: false }) }, { text: 'Hatırlat', onPress: () => {
+          track('reminder_prompt', { accepted: true });
           scheduleMonthlyReminder(useVerim.getState().settings.reminderDay || 1, true).then(() => scheduleSecondReading()).catch(() => {});
         } }],
       ), 600);

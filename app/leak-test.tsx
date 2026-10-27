@@ -7,6 +7,7 @@ import { C, FONT, SPACE } from '../src/theme';
 import { Screen, T, Field, Button, Card } from '../src/ui';
 import { leakTestResult } from '../src/engine/insights';
 import { parseMeterInput } from '../src/engine/validation';
+import { track } from '../src/services/analytics';
 
 const KEY = 'verim-leak-test';
 
@@ -34,7 +35,9 @@ export default function LeakTest() {
     const v = parseMeterInput(input, 'water');
     if (v == null || !start) return setErr('Değeri ondalıklarıyla gir, ör. 43817,058');
     if (v < start.value) return setErr('İkinci değer ilkinden küçük olamaz; rakamları kontrol et.');
-    setResult(leakTestResult(start.value, v, minutes));
+    const res = leakTestResult(start.value, v, minutes);
+    setResult(res);
+    track('leak_test_done', { minutes: Math.round(minutes), leak: res.leak });
     AsyncStorage.removeItem(KEY).catch(() => {});
   };
   const restart = () => { setStart(null); setResult(null); setInput(''); AsyncStorage.removeItem(KEY).catch(() => {}); };

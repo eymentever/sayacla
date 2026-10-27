@@ -60,7 +60,12 @@ Tahminler bilgilendirme amaçlıdır; kesin tutar dağıtım şirketinin / beled
 | Destek e-postası | m.eymen@teverorman.com |
 
 ## 6. App Privacy (Gizlilik etiketleri)
-**Kimliğe bağlı olmayan veriler (yayınlandı):** Device ID, Performance Data, Other Diagnostic Data — amaç Analytics, takip yok. Kaynak: Google ML Kit cihaz içi metin tanıma teşhis verisi (developers.google.com/ml-kit/ios-data-disclosure). Fotoğraf ve okumalar cihazdan çıkmaz.
+Hiçbiri kimliğe bağlı değil, hiçbiri takip (tracking) için kullanılmıyor.
+- **Usage Data → Product Interaction** — amaç: Analytics (anonim kullanım olayları, Supabase/Frankfurt)
+- **Other Data → Other Data Types** — amaç: Analytics, App Functionality (izinli il istatistiği: il/ilçe, dönemlik m³, fatura tutarı, ev özellikleri)
+- **Identifiers → Device ID** — amaç: Analytics (kuruluma özgü rastgele kimlik + Google ML Kit kurulum tanımlayıcısı)
+- **Diagnostics → Performance Data, Other Diagnostic Data** — amaç: Analytics (Google ML Kit)
+Kaynak: developers.google.com/ml-kit/ios-data-disclosure. Fotoğraflar ve sayaç endeksleri cihazdan çıkmaz.
 
 ## 7. Review notları (App Review Information)
 ```

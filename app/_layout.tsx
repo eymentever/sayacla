@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -9,6 +10,7 @@ import { C } from '../src/theme';
 import { useVerim } from '../src/store/useVerim';
 import { syncTariffs } from '../src/services/tariffSync';
 import { setupChannels, onNotificationTap, scheduleMonthlyReminder } from '../src/services/notify';
+import { trackDailyOpen, track, flush } from '../src/services/analytics';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -20,8 +22,12 @@ export default function Root() {
 
   useEffect(() => {
     setupChannels().catch(() => {});
-    const sub = onNotificationTap(route => router.push(route as any));
-    return () => sub.remove();
+    const sub = onNotificationTap(route => { track('notif_open', { route }); router.push(route as any); });
+    const app = AppState.addEventListener('change', s => {
+      if (s === 'active' && useVerim.getState().hydrated) trackDailyOpen().catch(() => {});
+      if (s === 'background') flush().catch(() => {});
+    });
+    return () => { sub.remove(); app.remove(); };
   }, []);
 
   useEffect(() => {
@@ -29,6 +35,7 @@ export default function Root() {
     SplashScreen.hideAsync().catch(() => {});
     syncTariffs().catch(() => {});
     if (onboarded) scheduleMonthlyReminder(reminderDay).catch(() => {});
+    if (onboarded) trackDailyOpen().catch(() => {});
   }, [hydrated, onboarded, reminderDay]);
 
   return (

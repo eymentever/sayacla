@@ -37,6 +37,10 @@ export interface Settings {
   weeklyHeating: boolean;
   /** Sayaç rehberi gösterildi mi (tür başına) */
   guideSeen?: { water?: boolean; gas?: boolean };
+  /** Anonim kullanım istatistikleri (varsayılan açık, Ayarlar'dan kapatılabilir) */
+  analytics: boolean;
+  /** Anonim tüketim verisiyle il istatistiklerine katkı — açık rıza; null = henüz sorulmadı */
+  contribute: boolean | null;
 }
 
 interface State {
@@ -52,6 +56,9 @@ interface State {
   /** Uzak tarife paketi (null → gömülü paket) */
   remoteTariffs: Partial<TariffBundle> | null;
   tariffsFetchedAt: string | null;
+  /** Kuruluma özgü rastgele kimlik — kişiyi tanımlamaz, "Tüm verileri sil" ile yenilenir */
+  installId: string;
+  installedAt: string;
 
   completeOnboarding: (p: { name: string; householdSize: number; property: Omit<Property, 'id'> }) => void;
   addProperty: (p: Omit<Property, 'id'>) => string;
@@ -69,6 +76,11 @@ interface State {
   resetAll: () => void;
 }
 
+export const newInstallId = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+  const r = (Math.random() * 16) | 0;
+  return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+});
+
 const uid = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 
 const INITIAL = {
@@ -77,7 +89,7 @@ const INITIAL = {
   activePropertyId: null as string | null,
   readings: [] as Reading[],
   bills: [] as PaidBill[],
-  settings: { reminderDay: 1, tierAlerts: true, weeklyHeating: true },
+  settings: { reminderDay: 1, tierAlerts: true, weeklyHeating: true, analytics: true, contribute: null } as Settings,
   remoteTariffs: null as Partial<TariffBundle> | null,
   tariffsFetchedAt: null as string | null,
   warned: {} as Record<string, string[]>,
@@ -88,6 +100,8 @@ export const useVerim = create<State>()(
     (set, get) => ({
       hydrated: false,
       ...INITIAL,
+      installId: newInstallId(),
+      installedAt: new Date().toISOString(),
 
       completeOnboarding: ({ name, householdSize, property }) => {
         const id = uid();
@@ -127,7 +141,7 @@ export const useVerim = create<State>()(
         return cur.includes(month) ? s : { warned: { ...s.warned, [pid]: [...cur, month] } };
       }),
       setRemoteTariffs: t => set({ remoteTariffs: t, tariffsFetchedAt: new Date().toISOString() }),
-      resetAll: () => set({ ...INITIAL }),
+      resetAll: () => set({ ...INITIAL, installId: newInstallId(), installedAt: new Date().toISOString() }),
     }),
     {
       name: 'verim-v2',
@@ -137,6 +151,8 @@ export const useVerim = create<State>()(
         ...current, ...(persisted ?? {}),
         settings: { ...current.settings, ...(persisted?.settings ?? {}) },
         warned: persisted?.warned ?? {},
+        installId: persisted?.installId ?? current.installId,
+        installedAt: persisted?.installedAt ?? current.installedAt,
       }),
       partialize: ({ hydrated, ...rest }) => rest as any,
       onRehydrateStorage: () => state => {

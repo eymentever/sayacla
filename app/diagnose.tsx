@@ -6,6 +6,7 @@ import { C, FONT, RADIUS, SPACE } from '../src/theme';
 import { Screen, T, Button, tap } from '../src/ui';
 import { useVerim, useActiveProperty } from '../src/store/useVerim';
 import { HomeProfile } from '../src/engine/diagnosis';
+import { track } from '../src/services/analytics';
 
 type Q<K extends keyof HomeProfile> = { key: K; q: string; hint?: string; opts: { v: HomeProfile[K]; label: string }[] };
 
@@ -60,7 +61,7 @@ export default function Diagnose() {
       ))}
 
       <Button title={done ? 'Sonuçları gör' : `${QUESTIONS.length - answered} soru kaldı`} disabled={!done}
-        onPress={() => { update(prop.id, { home: a as HomeProfile }); router.back(); }} />
+        onPress={() => { update(prop.id, { home: a as HomeProfile }); track('diagnose_done'); router.back(); }} />
     </Screen>
   );
 }

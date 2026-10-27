@@ -12,6 +12,7 @@ import { checkBillAgainstReadings } from '../src/engine/insights';
 import { monthKey } from '../src/engine/consumption';
 import { parseMeterInput } from '../src/engine/validation';
 import { monthName, tl } from '../src/utils/format';
+import { onBillSaved } from '../src/services/analytics';
 
 export default function BillScreen() {
   const router = useRouter();
@@ -42,7 +43,9 @@ export default function BillScreen() {
     if (!m3v || !a) { setError('Tüketim ve tutarı gir.'); return; }
     const c = calibrate(bundle, type, prop.province, month, m3v, a);
     if (!c.ok) { setError(c.reason); return; }
-    addBill({ propertyId: prop.id, type, month, m3: Math.round(m3v * 1000) / 1000, amount: a });
+    const rec = { propertyId: prop.id, type, month, m3: Math.round(m3v * 1000) / 1000, amount: a };
+    addBill(rec);
+    onBillSaved(rec);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     router.back();
   };
