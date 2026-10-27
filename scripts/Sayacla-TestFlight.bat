@@ -59,7 +59,7 @@ if errorlevel 1 goto fail
 :build
 echo.
 echo [6/6] iOS derlemesi basliyor, bitince TestFlight'a gonderilecek.
-echo  ==^> Apple ID: eymentever@gmail.com - sifre ve iki adimli dogrulama istenecek
+echo  ==^> Apple Developer hesabinin Apple ID ve sifresi, iki adimli dogrulama istenecek
 echo  ==^> Takim sorulursa: Mustafa Eymen Tever - XGBDMRT3Q9
 echo  ==^> Sertifika, profil ve API anahtari sorularina Y de
 echo.

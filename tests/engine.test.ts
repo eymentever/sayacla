@@ -246,3 +246,17 @@ test('fatura dönemi: 15inden 15ine, limit günlük orantılı, uyarı döneme g
   assert.ok(ins && /fatura döneminde|dönem sonunda|bu dönemki|Dönem sonunda/i.test(ins.title + ins.body));
   assert.equal(billingPeriod(now, undefined), null);
 });
+
+import { mergeBundle } from '../src/engine/tariffs';
+test('uzak tarife: bozuk/kötü niyetli değerler reddedilir', () => {
+  const bad: any = { version: 'x', gas: { national: { k1: -5, k2: 1e9 }, provinces: { Ankara: { limits: [0, 0], skbPerM3: 9999 } } },
+    water: { Ankara: { tiers: [{ upTo: null, rate: 99999 }] }, İzmir: { tiers: [{ upTo: null, rate: 40 }], kdv: 5 } } };
+  const m = mergeBundle(B, bad);
+  assert.equal(m.gas.national.k1, B.gas.national.k1);
+  assert.equal(m.gas.national.k2, B.gas.national.k2);
+  assert.deepEqual(m.gas.provinces.Ankara.limits, B.gas.provinces.Ankara.limits);
+  assert.equal(m.gas.provinces.Ankara.skbPerM3, B.gas.provinces.Ankara.skbPerM3);
+  assert.deepEqual(m.water.Ankara.tiers, B.water.Ankara.tiers);
+  assert.equal(m.water['İzmir'].tiers[0].rate, 40);
+  assert.equal(m.water['İzmir'].kdv, B.water['İzmir'].kdv);
+});

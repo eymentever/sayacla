@@ -178,18 +178,41 @@ export const DEFAULT_BUNDLE: TariffBundle = {
 /** Uzak paketi varsayılanın üstüne güvenli biçimde birleştirir (eksik alanlar varsayılandan gelir). */
 export function mergeBundle(base: TariffBundle, remote: Partial<TariffBundle> | null | undefined): TariffBundle {
   if (!remote || typeof remote !== 'object') return base;
+  // Uzak dosya bozulsa ya da kurcalansa bile saçma değerler uygulamaya giremez
+  const num = (x: unknown, lo: number, hi: number) => typeof x === 'number' && Number.isFinite(x) && x >= lo && x <= hi;
   const gasProv = { ...base.gas.provinces };
   for (const [il, p] of Object.entries(remote.gas?.provinces ?? {})) {
-    if (gasProv[il] && p && Array.isArray(p.limits) && p.limits.length === 12) gasProv[il] = { ...gasProv[il], ...p };
-    else if (gasProv[il] && p) gasProv[il] = { ...gasProv[il], ...p, limits: gasProv[il].limits };
+    if (!gasProv[il] || !p || typeof p !== 'object') continue;
+    const okLimits = Array.isArray(p.limits) && p.limits.length === 12 && p.limits.every(l => num(l, 1, 2000));
+    gasProv[il] = {
+      ...gasProv[il],
+      ...(num(p.skbPerM3, 0, 50) ? { skbPerM3: p.skbPerM3 } : {}),
+      ...(typeof p.source === 'string' ? { source: p.source.slice(0, 300) } : {}),
+      limits: okLimits ? p.limits : gasProv[il].limits,
+    };
   }
   const water = { ...base.water };
   for (const [il, w] of Object.entries(remote.water ?? {})) {
-    if (water[il] && w && Array.isArray(w.tiers) && w.tiers.length > 0) water[il] = { ...water[il], ...w };
+    if (!water[il] || !w || !Array.isArray(w.tiers) || w.tiers.length === 0 || w.tiers.length > 8) continue;
+    const tiersOk = w.tiers.every(t => t && num(t.rate, 1, 1000) && (t.upTo == null || num(t.upTo, 1, 10000)));
+    if (!tiersOk) continue;
+    water[il] = {
+      ...water[il], ...w,
+      kdv: num(w.kdv, 0, 0.3) ? w.kdv : water[il].kdv,
+      ctvPerM3: num(w.ctvPerM3, 0, 50) ? w.ctvPerM3 : water[il].ctvPerM3,
+      fixedMonthly: num(w.fixedMonthly, 0, 2000) ? w.fixedMonthly : water[il].fixedMonthly,
+      source: typeof w.source === 'string' ? w.source.slice(0, 300) : water[il].source,
+    };
   }
+  const nat = remote.gas?.national ?? {};
+  const national = { ...base.gas.national };
+  for (const [k, lo, hi] of [['k1', 1, 200], ['k2', 1, 400], ['otvPerM3', 0, 20], ['kdv', 0, 0.5], ['kwhPerM3', 5, 15]] as const) {
+    if (num((nat as any)[k], lo, hi)) (national as any)[k] = (nat as any)[k];
+  }
+  if (typeof (nat as any).source === 'string') national.source = (nat as any).source.slice(0, 300);
   return {
-    version: remote.version ?? base.version,
-    gas: { national: { ...base.gas.national, ...(remote.gas?.national ?? {}) }, provinces: gasProv },
+    version: typeof remote.version === 'string' ? remote.version.slice(0, 40) : base.version,
+    gas: { national, provinces: gasProv },
     water,
   };
 }
