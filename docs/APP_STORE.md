@@ -19,15 +19,15 @@ doğalgaz,kademe,botaş,su faturası,sayaç,igdaş,iski,aski,fatura hesapla,tasa
 ```
 
 ## 3. Tanıtım metni (170)
-Doğalgazda 1 m³ fazla tüketim ayın tamamını 2. kademeye taşıyabilir. Sayaçla, ilinin BOTAŞ limitini takip eder ve aşmadan önce seni uyarır.
+Doğalgazda aylık limiti 1 m³ aşmak ayın tüm gazını pahalı fiyata taşır. Sayaçla ilinin limitini takip eder, aşmadan önce uyarır.
 
 ## 4. Açıklama
 Su ve doğalgaz faturanı ödemeden önce bil.
 
 Sayaçla, sayacını okuttuğun anda bu ayın tahmini faturasını, geçen aya göre farkı ve neyi değiştirirsen ayda kaç TL tasarruf edeceğini gösterir.
 
-DOĞALGAZ KADEME UYARISI
-4 Nisan 2026’dan beri doğalgazda il bazlı kademeli tarife uygulanıyor. Aylık limitini 1 m³ bile aşarsan o ayın tüm tüketimi 2. kademe fiyatından faturalanıyor. Sayaçla 81 ilin 12 aylık BOTAŞ limitlerini bilir, ay sonu tüketimini tahmin eder ve “limitine 6 m³ kaldı, günde en fazla 0,8 m³ kullan” gibi net uyarılar verir.
+DOĞALGAZDA PAHALI FİYAT UYARISI
+4 Nisan 2026’dan beri doğalgazda il bazlı kademeli tarife uygulanıyor. Aylık limiti 1 m³ bile aşarsan o ayın tüm gazı pahalı fiyattan faturalanıyor. Sayaçla 81 ilin 12 aylık BOTAŞ limitlerini bilir, ay sonu tüketimini tahmin eder ve “ucuz fiyat limitine 6 m³ kaldı, günde en fazla 0,8 m³ kullan” gibi net uyarılar verir.
 
 SAYACI OKUT, FATURAYI GÖR
 • Kamerayla okut — rakamlar cihaz üzerinde okunur, fotoğraf internete gitmez
@@ -42,13 +42,13 @@ GERÇEK FİYATINLA HESAP
 • Tarifeler internetten otomatik güncellenir
 
 NE YAPMALISIN?
-Kendi tüketimin ve ilinin tarifesiyle hesaplanmış, TL bazlı öneriler: kademede kalmak için gereken azaltım, oda sıcaklığı, duş süresi, perlatör, kaçak testi…
+Kendi tüketimin ve ilinin tarifesiyle hesaplanmış, TL bazlı öneriler: ucuz fiyatta kalmak için gereken azaltım, oda sıcaklığı, duş süresi, perlatör, kaçak testi…
 
 SU KAÇAK TESTİ
 İki okumayla klozet rezervuarı ve tesisat sızıntılarını litre olarak ölç.
 
 GİZLİLİK
-Hesap yok, reklam yok, takip yok. Tüm verilerin yalnızca cihazında saklanır.
+Hesap yok, reklam yok, takip yok. Okumaların cihazında saklanır; anonim kullanım istatistiği ve izin verirsen anonim il istatistiği dışında hiçbir veri cihazdan çıkmaz.
 
 Tahminler bilgilendirme amaçlıdır; kesin tutar dağıtım şirketinin / belediyenin faturasındadır.
 
