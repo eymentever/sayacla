@@ -122,7 +122,9 @@ test('gaz anomalisi geçen yıl yoksa üretilmez (mevsimsel yanılgı yok)', () 
   assert.equal(anomalyInsight(rs, 'gas'), null);
 });
 
-import { summarize, savingsTips } from '../src/engine/summary';
+import { summarize, savingsTips, billBasedProjection } from '../src/engine/summary';
+import { gasLimit } from '../src/engine/bills';
+const DEFAULT_BUNDLE = B;
 
 test('özet: geçen ay gerçek fatura varsa onunla kıyaslar ve nedeni açıklar', () => {
   const rs = [R('2026-10-01T00:00:00', 1000), R('2026-10-15T00:00:00', 1028)];
@@ -208,4 +210,16 @@ test('teşhis: sıcak ev + termostatsız + bakımsız → en büyük nedenler s�
   assert.ok(comb > 0.3 && comb < 0.7, `${comb}`);
   // Yaz ayında ısınma kaynaklı neden çıkmaz
   assert.equal(diagnose(home, 400, 800, 18, 3, 6).filter(c => c.type === 'gas').length, 0);
+});
+
+test('ilk gün: okuma yokken son faturadan mevsime göre tahmin', () => {
+  const now = new Date(2026, 10, 10); // Kasım
+  const bills = [{ id: 'b', propertyId: 'p', type: 'gas' as const, month: '2026-10', m3: 60, amount: 1100 }];
+  const bp = billBasedProjection(bills, 'gas', DEFAULT_BUNDLE, 'Ankara', now)!;
+  const lo = gasLimit(DEFAULT_BUNDLE, 'Ankara', '2026-10'), ln = gasLimit(DEFAULT_BUNDLE, 'Ankara', '2026-11');
+  assert.ok(Math.abs(bp.m3 - (60 / 31) * (ln / lo) * 30) < 0.01);
+  const s = summarize([], bills, 'gas', DEFAULT_BUNDLE, 'Ankara', now);
+  assert.equal(s.basis, 'bill');
+  assert.ok(s.hasData && s.projectedBill && s.projectedBill.total > 0);
+  assert.equal(billBasedProjection(bills, 'gas', DEFAULT_BUNDLE, 'Ankara', new Date(2027, 3, 1)), null); // 3 aydan eski
 });

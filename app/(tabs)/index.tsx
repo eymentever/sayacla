@@ -136,6 +136,9 @@ export default function Dashboard() {
         )}
         <Button title={hasAny ? 'Sayacı oku' : propReadings.length ? 'İkinci okumayı yap' : 'İlk okumayı yap'}
           icon={<ScanLine size={18} color="#04140D" />} onPress={() => router.push('/scan')} style={{ marginTop: SPACE.lg }} />
+        {!hasAny ? (
+          <Button kind="ghost" title="Son faturanı gir, tahmini hemen gör" onPress={() => router.push('/bill')} style={{ marginTop: SPACE.sm }} />
+        ) : null}
       </Card>
 
       {/* ── Sayaçla ile korunan para ── */}
@@ -291,7 +294,9 @@ function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
             ) : null}
           </View>
           {x.reason ? <T.Small style={{ marginTop: SPACE.sm }}>Neden: {x.reason}</T.Small> : null}
-          {!x.forecast.reliable ? <T.Small color={C.warn} style={{ marginTop: SPACE.sm }}>Tahmin için veri az; birkaç gün sonra tekrar okut.</T.Small> : null}
+          {x.basis === 'bill' ? (
+            <T.Small color={C.warn} style={{ marginTop: SPACE.sm }}>Son faturana göre ilk tahmin. Sayacı birkaç gün arayla iki kez okuyunca gerçek tüketiminle kesinleşir.</T.Small>
+          ) : !x.forecast.reliable ? <T.Small color={C.warn} style={{ marginTop: SPACE.sm }}>Tahmin için veri az; birkaç gün sonra tekrar okut.</T.Small> : null}
 
           {limit != null && Number.isFinite(limit) && (
             <View style={{ marginTop: SPACE.lg }}>
@@ -305,7 +310,7 @@ function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
               <View style={{ marginTop: 8 }}>
                 <Progress ratio={x.forecast.measured / limit}
                   color={x.forecast.measured > limit ? C.danger : x.forecast.projected > limit ? C.warn : C.ok}
-                  marker={x.forecast.reliable ? Math.min(1, x.forecast.projected / limit) : undefined} />
+                  marker={x.forecast.reliable || x.basis === 'bill' ? Math.min(1, x.forecast.projected / limit) : undefined} />
               </View>
               {info ? <T.Small style={{ marginTop: 8 }}>{info.body}</T.Small> : null}
               {x.forecast.reliable ? (() => {

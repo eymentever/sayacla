@@ -25,7 +25,7 @@ export function useDashboard(now = new Date()) {
       .filter(t => (t.type === 'water' ? prop.hasWater : prop.hasGas));
     const totalProjected = (water?.projectedBill?.total ?? 0) + (gas?.projectedBill?.total ?? 0);
     const lastTotal = (water?.lastMonth?.amount ?? 0) + (gas?.lastMonth?.amount ?? 0);
-    const comparable = [water, gas].filter(Boolean).every(x => !x!.hasData || (x!.lastMonth && x!.forecast.reliable));
+    const comparable = [water, gas].filter(Boolean).every(x => !x!.hasData || (x!.lastMonth && (x!.forecast.reliable || x!.basis === 'bill')));
     return {
       prop, bundle, water, gas, insights, tips, totalProjected,
       lastTotal: comparable && lastTotal > 0 ? lastTotal : null,

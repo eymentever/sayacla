@@ -1,7 +1,7 @@
 // Ana sayfa özeti: bu ay tahmini fatura, geçen ayla kıyas, kişisel ve TL bazlı tasarruf önerileri.
 
 import { Reading, UtilityType, BillEstimate } from './types';
-import { buildIntervals, monthlyUsage, forecastMonth, monthKey, MonthForecast } from './consumption';
+import { buildIntervals, monthlyUsage, forecastMonth, monthKey, MonthForecast, daysInMonth } from './consumption';
 import { TariffBundle } from './tariffs';
 import { billFor, Calibration, gasLimit, calibrationFactor, inferGasTier } from './bills';
 import { d1, d0 } from './fmt';
@@ -31,6 +31,28 @@ export interface TypeSummary {
   deltaPct: number | null;
   /** Değişimin nedeni, insan dilinde */
   reason: string | null;
+  /** Tahminin dayanağı: sayaç okumaları mı, henüz okuma yokken son fatura mı */
+  basis: 'readings' | 'bill' | null;
+}
+
+/**
+ * İlk gün değeri: güvenilir okuma yokken son 3 aydaki faturadan bu ayı tahmin eder.
+ * Doğalgazda mevsim etkisi il limitlerinin oranıyla (limit = 5 yıllık aynı ay ortalaması × 1,75) ölçeklenir.
+ */
+export function billBasedProjection(bills: PaidBill[], type: UtilityType, bundle: TariffBundle, province: string, now = new Date()): { m3: number; from: PaidBill } | null {
+  const month = monthKey(now);
+  const recent = bills.filter(b => b.type === type && b.m3 > 0 && b.month < month).sort((a, c) => c.month.localeCompare(a.month))[0];
+  if (!recent) return null;
+  const [by, bm] = recent.month.split('-').map(Number);
+  const ageMonths = (now.getFullYear() - by) * 12 + (now.getMonth() + 1 - bm);
+  if (ageMonths > 3) return null;
+  const perDay = recent.m3 / daysInMonth(by, bm - 1);
+  let season = 1;
+  if (type === 'gas') {
+    const a = gasLimit(bundle, province, recent.month), b = gasLimit(bundle, province, month);
+    if (Number.isFinite(a) && Number.isFinite(b) && a > 0) season = Math.min(4, Math.max(0.25, b / a));
+  }
+  return { m3: perDay * season * daysInMonth(now.getFullYear(), now.getMonth()), from: recent };
 }
 
 export interface Tip {
@@ -63,8 +85,20 @@ export function summarize(
   const month = monthKey(now);
   const hasData = buildIntervals(rs, type).length > 0;
 
-  const projectedBill = hasData ? billFor(bundle, type, province, month, fc.projected, cal) : null;
+  let projectedBill = hasData ? billFor(bundle, type, province, month, fc.projected, cal) : null;
   const soFarBill = hasData ? billFor(bundle, type, province, month, fc.measured, cal) : null;
+  let basis: TypeSummary['basis'] = hasData ? 'readings' : null;
+  if (!fc.reliable) {
+    const bp = billBasedProjection(bills, type, bundle, province, now);
+    if (bp) {
+      // Ölçülen kısım + kalan günler için faturadan çıkan günlük hız (ölçüm yoksa tamamı faturadan)
+      const remainingShare = Math.max(0, fc.daysInMonth - fc.coveredDays) / fc.daysInMonth;
+      const m3 = fc.measured + bp.m3 * remainingShare;
+      fc.projected = m3;
+      projectedBill = billFor(bundle, type, province, month, m3, cal);
+      basis = 'bill';
+    }
+  }
 
   // Geçen ay: önce gerçek fatura, yoksa okumalardan tahmin (en az 20 gün kapsanmışsa)
   const pm = prevMonthKey(now);
@@ -80,7 +114,7 @@ export function summarize(
   }
 
   let deltaTL: number | null = null, deltaPct: number | null = null, reason: string | null = null;
-  if (projectedBill && lastMonth && fc.reliable) {
+  if (projectedBill && lastMonth && (fc.reliable || basis === 'bill')) {
     deltaTL = projectedBill.total - lastMonth.amount;
     deltaPct = lastMonth.amount > 0 ? deltaTL / lastMonth.amount : null;
     const dM3 = fc.projected - lastMonth.m3;
@@ -99,7 +133,7 @@ export function summarize(
     reason = parts.length ? parts.join(' · ') : 'tüketim geçen ayla aynı seviyede';
   }
 
-  return { type, hasData, forecast: fc, projectedBill, soFarBill, lastMonth, deltaTL, deltaPct, reason };
+  return { type, hasData: hasData || basis === 'bill', forecast: fc, projectedBill, soFarBill, lastMonth, deltaTL, deltaPct, reason, basis };
 }
 
 /**
