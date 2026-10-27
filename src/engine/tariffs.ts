@@ -136,19 +136,25 @@ const WATER_KNOWN: Record<string, WaterProvince> = {
   'Erzurum':       W('ESKİ (Erzurum)', flat(30.24), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
   'Malatya':       W('MASKİ (Malatya)', flat(31.41), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
   'Şanlıurfa':     W('ŞUSKİ', flat(38.29), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
-  'Kayseri':       W('KASKİ', flat(40.41), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Kayseri': W('KASKİ', [{ upTo: 15, rate: 35.74 }, { upTo: 30, rate: 46.54 }, { upTo: null, rate: 55.19 }], 0, { source: 'KASKİ su fiyatları, Grup A merkez ilçeler; KDV ve ÇTV hariç, aylık TÜFE ile güncellenir (kaski.gov.tr, 27.10.2026)', asOf: '2026-10-27', verified: true }),
   'Adana':         W('ASKİ (Adana)', flat(41.42), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
-  'Diyarbakır':    W('DİSKİ', flat(43.19), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
-  'Sakarya':       W('SASKİ', flat(44.29), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
-  'Eskişehir':     W('ESKİ', flat(45.38), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
-  'Antalya':       W('ASAT', flat(45.95), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Diyarbakır': W('DİSKİ', [{ upTo: 18, rate: 37.32 }, { upTo: 26, rate: 49.73 }, { upTo: null, rate: 57.69 }], 0, { source: 'DİSKİ güncel su fiyatları, Ekim 2026 (Kayapınar, Yenişehir, Bağlar, Sur), KDV hariç', asOf: '2026-10-01', verified: true }),
+  'Sakarya': W('SASKİ', flat(44.28), 0, { source: 'SASKİ merkez ilçeler su 29,52 TL (KDV hariç) + %50 atıksu (sakarya.bel.tr)', asOf: '2025-10-01' }),
+  'Eskişehir': W('ESKİ', flat(46.26), 0, { source: 'ESKİ merkez (Odunpazarı, Tepebaşı) su 33,03 + atıksu 13,22, KDV hariç, 4 Nisan 2026; aylık TÜFE ile artar (iscihaber.net)', asOf: '2026-04-04' }),
+  'Antalya': W('ASAT', [{ upTo: 20, rate: 30.63 }, { upTo: 40, rate: 75.36 }, { upTo: null, rate: 107.66 }], 0, { source: 'ASAT Mart 2026 resmi tarife cetveli, KDV hariç; her ay (ÜFE+TÜFE)/2 artar', asOf: '2026-03-01', verified: true }),
   'Trabzon':       W('TİSKİ', flat(51.77), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
   'Hatay':         W('HATSU', flat(53.89), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
-  'Konya':         W('KOSKİ', flat(56.30), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Konya': W('KOSKİ', flat(48.87), 0, { source: 'KOSKİ Ekim 2026 zammı sonrası m³ fiyatı, üç ayda bir güncellenir (merhabahaber.com, 05.10.2026)', asOf: '2026-10-05' }),
   'Kahramanmaraş': W('KASKİ (K.Maraş)', flat(68.36), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
-  'Kocaeli':       W('İSU', flat(70.23), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
-  'Gaziantep':     W('GASKİ', flat(72.56), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
-  'Mersin':        W('MESKİ', flat(76.31), 0, { source: PRESS_0311, asOf: '2026-03-11' }),
+  'Kocaeli': W('İSU', [{ upTo: 12, rate: 38.49 }, { upTo: 20, rate: 70.23 }, { upTo: null, rate: 110.0 }], 0, { source: 'İSU resmi birim fiyatlar, Ekim 2026 (1–31.10.2026), mesken su+atıksu (isu.gov.tr)', asOf: '2026-10-01', verified: true }),
+  'Gaziantep': W('GASKİ', [{ upTo: 12, rate: 53.79 }, { upTo: null, rate: 80.69 }], 0, { source: 'GASKİ konut su 46,27/69,40 + atıksu 7,52/11,29 (olaymedya.com, 31.07.2026)', asOf: '2026-07-31' }),
+  'Mersin': W('MESKİ', flat(53.93), 0, { source: 'MESKİ su+atıksu satış fiyatı, Mayıs 2026 sonu; her ay (TEFE+TÜFE)/2 artar (Başkan Seçer açıklaması, 12.05.2026)', asOf: '2026-05-31' }),
+  'Bursa': W('BUSKİ', [{ upTo: 15, rate: 57.65 }, { upTo: 20, rate: 109.53 }, { upTo: null, rate: 167.17 }], 0, { source: 'BUSKİ 1 Haziran 2026 kademe düzenlemesi; su+atıksu, KDV hariç (inegolonline.com, yenisafak.com 14.05.2026)', asOf: '2026-06-01' }),
+  'Balıkesir': W('BASKİ', [{ upTo: 10, rate: 67.65 }, { upTo: 20, rate: 123.29 }, { upTo: null, rate: 163.05 }], 0, { source: 'BASKİ 2026 konut tarifesi (politikam.com, 10.10.2026)', asOf: '2026-10-10' }),
+  'Manisa': W('MASKİ (Manisa)', [{ upTo: 12, rate: 59.38 }, { upTo: 22, rate: 89.06 }, { upTo: null, rate: 123.36 }], 0, { source: 'MASKİ 2026 su fiyatları (KDV hariç) + atıksu; Mayıs 2026 kademe genişletmesi (manisahaberx.com 12.05.2026)', asOf: '2026-05-12' }),
+  'Samsun': W('SASKİ (Samsun)', [{ upTo: 17, rate: 86.76 }, { upTo: null, rate: 100.89 }], 0, { source: 'SASKİ Temmuz 2026 mesken Grup 1 su 57,84/67,26 + %50 atıksu, KDV hariç (habergazetesi.com.tr 29.07.2026)', asOf: '2026-07-01' }),
+  'Tekirdağ': W('TESKİ', [{ upTo: 10, rate: 34.86 }, { upTo: null, rate: 69.71 }], 0, { source: 'TESKİ satış fiyatı 69,71 TL/m³ (Mayıs 2026); 1 Temmuz 2026’dan itibaren 1–10 m³ için %50 indirim (tekirdagyenihaber.com 15.05.2026)', asOf: '2026-07-01' }),
+  'Denizli': W('DESKİ', flat(27.84), 0, { source: 'DESKİ açıklaması: indirim sonrası m³ bedeli 27,84 TL (denizlihaber.com, 18.06.2026)', asOf: '2026-06-18' }),
 };
 
 /** Doğrulanmış verisi olmayan iller: büyükşehir ortalamasına yakın tahmini; faturayla kalibrasyon şart. */
@@ -164,7 +170,7 @@ const METRO = ['Adana','Ankara','Antalya','Aydın','Balıkesir','Bursa','Denizli
 export const ALL_PROVINCES: string[] = Object.keys(GAS_LIMITS_2026).sort((a, b) => a.localeCompare(b, 'tr'));
 
 export const DEFAULT_BUNDLE: TariffBundle = {
-  version: '2026.10-bundled',
+  version: '2026.10.27-bundled',
   gas: { national: GAS_NATIONAL, provinces: GAS_PROVINCES },
   water: Object.fromEntries(ALL_PROVINCES.map(il => [il, WATER_KNOWN[il] ?? { ...NATIONAL_WATER_DEFAULT, ctvPerM3: METRO.includes(il) ? 4.0 : 2.0 }])),
 };

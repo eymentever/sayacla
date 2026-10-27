@@ -1,5 +1,5 @@
 {
- "version": "2026-10-22",
+ "version": "2026-10-27",
  "gas": {
   "national": {
    "k1": 10.625,
@@ -1754,16 +1754,24 @@
    "authority": "ASAT",
    "tiers": [
     {
+     "upTo": 20,
+     "rate": 30.63
+    },
+    {
+     "upTo": 40,
+     "rate": 75.36
+    },
+    {
      "upTo": null,
-     "rate": 45.95
+     "rate": 107.66
     }
    ],
    "fixedMonthly": 0,
    "kdv": 0.04,
    "ctvPerM3": 4,
-   "source": "Büyükşehir su fiyatları karşılaştırması, 20 m³ ortalama (mersinobjektif.com.tr, 11.03.2026)",
-   "asOf": "2026-03-11",
-   "verified": false
+   "source": "ASAT Mart 2026 resmi tarife cetveli, KDV hariç; her ay (ÜFE+TÜFE)/2 artar",
+   "asOf": "2026-03-01",
+   "verified": true
   },
   "Ardahan": {
    "authority": "Belediye su idaresi",
@@ -1811,18 +1819,26 @@
    "verified": false
   },
   "Balıkesir": {
-   "authority": "Belediye su idaresi",
+   "authority": "BASKİ",
    "tiers": [
     {
+     "upTo": 10,
+     "rate": 67.65
+    },
+    {
+     "upTo": 20,
+     "rate": 123.29
+    },
+    {
      "upTo": null,
-     "rate": 50
+     "rate": 163.05
     }
    ],
    "fixedMonthly": 0,
    "kdv": 0.04,
    "ctvPerM3": 4,
-   "source": "Tahmini (büyükşehir ortalamaları, Mart 2026). Doğru sonuç için faturanla kalibre et.",
-   "asOf": "2026-03-11",
+   "source": "BASKİ 2026 konut tarifesi (politikam.com, 10.10.2026)",
+   "asOf": "2026-10-10",
    "verified": false
   },
   "Bartın": {
@@ -1946,18 +1962,26 @@
    "verified": false
   },
   "Bursa": {
-   "authority": "Belediye su idaresi",
+   "authority": "BUSKİ",
    "tiers": [
     {
+     "upTo": 15,
+     "rate": 57.65
+    },
+    {
+     "upTo": 20,
+     "rate": 109.53
+    },
+    {
      "upTo": null,
-     "rate": 50
+     "rate": 167.17
     }
    ],
    "fixedMonthly": 0,
    "kdv": 0.04,
    "ctvPerM3": 4,
-   "source": "Tahmini (büyükşehir ortalamaları, Mart 2026). Doğru sonuç için faturanla kalibre et.",
-   "asOf": "2026-03-11",
+   "source": "BUSKİ 1 Haziran 2026 kademe düzenlemesi; su+atıksu, KDV hariç (inegolonline.com, yenisafak.com 14.05.2026)",
+   "asOf": "2026-06-01",
    "verified": false
   },
   "Çanakkale": {
@@ -2006,34 +2030,42 @@
    "verified": false
   },
   "Denizli": {
-   "authority": "Belediye su idaresi",
+   "authority": "DESKİ",
    "tiers": [
     {
      "upTo": null,
-     "rate": 50
+     "rate": 27.84
     }
    ],
    "fixedMonthly": 0,
    "kdv": 0.04,
    "ctvPerM3": 4,
-   "source": "Tahmini (büyükşehir ortalamaları, Mart 2026). Doğru sonuç için faturanla kalibre et.",
-   "asOf": "2026-03-11",
+   "source": "DESKİ açıklaması: indirim sonrası m³ bedeli 27,84 TL (denizlihaber.com, 18.06.2026)",
+   "asOf": "2026-06-18",
    "verified": false
   },
   "Diyarbakır": {
    "authority": "DİSKİ",
    "tiers": [
     {
+     "upTo": 18,
+     "rate": 37.32
+    },
+    {
+     "upTo": 26,
+     "rate": 49.73
+    },
+    {
      "upTo": null,
-     "rate": 43.19
+     "rate": 57.69
     }
    ],
    "fixedMonthly": 0,
    "kdv": 0.04,
    "ctvPerM3": 4,
-   "source": "Büyükşehir su fiyatları karşılaştırması, 20 m³ ortalama (mersinobjektif.com.tr, 11.03.2026)",
-   "asOf": "2026-03-11",
-   "verified": false
+   "source": "DİSKİ güncel su fiyatları, Ekim 2026 (Kayapınar, Yenişehir, Bağlar, Sur), KDV hariç",
+   "asOf": "2026-10-01",
+   "verified": true
   },
   "Düzce": {
    "authority": "Belediye su idaresi",
@@ -2115,29 +2147,33 @@
    "tiers": [
     {
      "upTo": null,
-     "rate": 45.38
+     "rate": 46.26
     }
    ],
    "fixedMonthly": 0,
    "kdv": 0.04,
    "ctvPerM3": 4,
-   "source": "Büyükşehir su fiyatları karşılaştırması, 20 m³ ortalama (mersinobjektif.com.tr, 11.03.2026)",
-   "asOf": "2026-03-11",
+   "source": "ESKİ merkez (Odunpazarı, Tepebaşı) su 33,03 + atıksu 13,22, KDV hariç, 4 Nisan 2026; aylık TÜFE ile artar (iscihaber.net)",
+   "asOf": "2026-04-04",
    "verified": false
   },
   "Gaziantep": {
    "authority": "GASKİ",
    "tiers": [
     {
+     "upTo": 12,
+     "rate": 53.79
+    },
+    {
      "upTo": null,
-     "rate": 72.56
+     "rate": 80.69
     }
    ],
    "fixedMonthly": 0,
    "kdv": 0.04,
    "ctvPerM3": 4,
-   "source": "Büyükşehir su fiyatları karşılaştırması, 20 m³ ortalama (mersinobjektif.com.tr, 11.03.2026)",
-   "asOf": "2026-03-11",
+   "source": "GASKİ konut su 46,27/69,40 + atıksu 7,52/11,29 (olaymedya.com, 31.07.2026)",
+   "asOf": "2026-07-31",
    "verified": false
   },
   "Giresun": {
@@ -2364,16 +2400,24 @@
    "authority": "KASKİ",
    "tiers": [
     {
+     "upTo": 15,
+     "rate": 35.74
+    },
+    {
+     "upTo": 30,
+     "rate": 46.54
+    },
+    {
      "upTo": null,
-     "rate": 40.41
+     "rate": 55.19
     }
    ],
    "fixedMonthly": 0,
    "kdv": 0.04,
    "ctvPerM3": 4,
-   "source": "Büyükşehir su fiyatları karşılaştırması, 20 m³ ortalama (mersinobjektif.com.tr, 11.03.2026)",
-   "asOf": "2026-03-11",
-   "verified": false
+   "source": "KASKİ su fiyatları, Grup A merkez ilçeler; KDV ve ÇTV hariç, aylık TÜFE ile güncellenir (kaski.gov.tr, 27.10.2026)",
+   "asOf": "2026-10-27",
+   "verified": true
   },
   "Kırıkkale": {
    "authority": "Belediye su idaresi",
@@ -2439,30 +2483,38 @@
    "authority": "İSU",
    "tiers": [
     {
-     "upTo": null,
+     "upTo": 12,
+     "rate": 38.49
+    },
+    {
+     "upTo": 20,
      "rate": 70.23
+    },
+    {
+     "upTo": null,
+     "rate": 110
     }
    ],
    "fixedMonthly": 0,
    "kdv": 0.04,
    "ctvPerM3": 4,
-   "source": "Büyükşehir su fiyatları karşılaştırması, 20 m³ ortalama (mersinobjektif.com.tr, 11.03.2026)",
-   "asOf": "2026-03-11",
-   "verified": false
+   "source": "İSU resmi birim fiyatlar, Ekim 2026 (1–31.10.2026), mesken su+atıksu (isu.gov.tr)",
+   "asOf": "2026-10-01",
+   "verified": true
   },
   "Konya": {
    "authority": "KOSKİ",
    "tiers": [
     {
      "upTo": null,
-     "rate": 56.3
+     "rate": 48.87
     }
    ],
    "fixedMonthly": 0,
    "kdv": 0.04,
    "ctvPerM3": 4,
-   "source": "Büyükşehir su fiyatları karşılaştırması, 20 m³ ortalama (mersinobjektif.com.tr, 11.03.2026)",
-   "asOf": "2026-03-11",
+   "source": "KOSKİ Ekim 2026 zammı sonrası m³ fiyatı, üç ayda bir güncellenir (merhabahaber.com, 05.10.2026)",
+   "asOf": "2026-10-05",
    "verified": false
   },
   "Kütahya": {
@@ -2496,18 +2548,26 @@
    "verified": false
   },
   "Manisa": {
-   "authority": "Belediye su idaresi",
+   "authority": "MASKİ (Manisa)",
    "tiers": [
     {
+     "upTo": 12,
+     "rate": 59.38
+    },
+    {
+     "upTo": 22,
+     "rate": 89.06
+    },
+    {
      "upTo": null,
-     "rate": 50
+     "rate": 123.36
     }
    ],
    "fixedMonthly": 0,
    "kdv": 0.04,
    "ctvPerM3": 4,
-   "source": "Tahmini (büyükşehir ortalamaları, Mart 2026). Doğru sonuç için faturanla kalibre et.",
-   "asOf": "2026-03-11",
+   "source": "MASKİ 2026 su fiyatları (KDV hariç) + atıksu; Mayıs 2026 kademe genişletmesi (manisahaberx.com 12.05.2026)",
+   "asOf": "2026-05-12",
    "verified": false
   },
   "Mardin": {
@@ -2530,14 +2590,14 @@
    "tiers": [
     {
      "upTo": null,
-     "rate": 76.31
+     "rate": 53.93
     }
    ],
    "fixedMonthly": 0,
    "kdv": 0.04,
    "ctvPerM3": 4,
-   "source": "Büyükşehir su fiyatları karşılaştırması, 20 m³ ortalama (mersinobjektif.com.tr, 11.03.2026)",
-   "asOf": "2026-03-11",
+   "source": "MESKİ su+atıksu satış fiyatı, Mayıs 2026 sonu; her ay (TEFE+TÜFE)/2 artar (Başkan Seçer açıklaması, 12.05.2026)",
+   "asOf": "2026-05-31",
    "verified": false
   },
   "Muğla": {
@@ -2650,29 +2710,33 @@
    "tiers": [
     {
      "upTo": null,
-     "rate": 44.29
+     "rate": 44.28
     }
    ],
    "fixedMonthly": 0,
    "kdv": 0.04,
    "ctvPerM3": 4,
-   "source": "Büyükşehir su fiyatları karşılaştırması, 20 m³ ortalama (mersinobjektif.com.tr, 11.03.2026)",
-   "asOf": "2026-03-11",
+   "source": "SASKİ merkez ilçeler su 29,52 TL (KDV hariç) + %50 atıksu (sakarya.bel.tr)",
+   "asOf": "2025-10-01",
    "verified": false
   },
   "Samsun": {
-   "authority": "Belediye su idaresi",
+   "authority": "SASKİ (Samsun)",
    "tiers": [
     {
+     "upTo": 17,
+     "rate": 86.76
+    },
+    {
      "upTo": null,
-     "rate": 50
+     "rate": 100.89
     }
    ],
    "fixedMonthly": 0,
    "kdv": 0.04,
    "ctvPerM3": 4,
-   "source": "Tahmini (büyükşehir ortalamaları, Mart 2026). Doğru sonuç için faturanla kalibre et.",
-   "asOf": "2026-03-11",
+   "source": "SASKİ Temmuz 2026 mesken Grup 1 su 57,84/67,26 + %50 atıksu, KDV hariç (habergazetesi.com.tr 29.07.2026)",
+   "asOf": "2026-07-01",
    "verified": false
   },
   "Siirt": {
@@ -2751,18 +2815,22 @@
    "verified": false
   },
   "Tekirdağ": {
-   "authority": "Belediye su idaresi",
+   "authority": "TESKİ",
    "tiers": [
     {
+     "upTo": 10,
+     "rate": 34.86
+    },
+    {
      "upTo": null,
-     "rate": 50
+     "rate": 69.71
     }
    ],
    "fixedMonthly": 0,
    "kdv": 0.04,
    "ctvPerM3": 4,
-   "source": "Tahmini (büyükşehir ortalamaları, Mart 2026). Doğru sonuç için faturanla kalibre et.",
-   "asOf": "2026-03-11",
+   "source": "TESKİ satış fiyatı 69,71 TL/m³ (Mayıs 2026); 1 Temmuz 2026’dan itibaren 1–10 m³ için %50 indirim (tekirdagyenihaber.com 15.05.2026)",
+   "asOf": "2026-07-01",
    "verified": false
   },
   "Tokat": {
@@ -2886,5 +2954,5 @@
    "verified": false
   }
  },
- "generatedAt": "2026-10-22T10:48:30.009Z"
+ "generatedAt": "2026-10-27T10:24:21.826Z"
 }
