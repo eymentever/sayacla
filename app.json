@@ -115,7 +115,10 @@
     },
     "extra": {
       "router": {},
-      "eas": {}
-    }
+      "eas": {
+        "projectId": "b5c11b24-17a7-4a6c-86e4-03e0fdc7daf7"
+      }
+    },
+    "owner": "eymentevers-organization"
   }
 }
