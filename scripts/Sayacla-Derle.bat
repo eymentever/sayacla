@@ -21,7 +21,7 @@ rem Apple ID ve takim kimligini bu iki satira yazarak sorulari atlayabilirsin:
 rem set EXPO_APPLE_ID=
 rem set EXPO_APPLE_TEAM_ID=
 echo [3/3] Derleme basliyor; bitince TestFlighta otomatik gider. Soru gelirse Y de.
-call eas build -p ios --profile production --auto-submit
+call eas build -p ios --profile production --auto-submit --non-interactive
 if errorlevel 1 goto fail
 echo.
 echo Tamam. TestFlight 30-40 dakika icinde hazir olur.
