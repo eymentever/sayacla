@@ -20,7 +20,7 @@ Yalnızca izin verirsen: iki okuma arasındaki tüketim (m³) ve dönem tarihler
 
 ## Kuruluma özgü kimlik
 
-Uygulama ilk açılışta rastgele bir kimlik üretir. Bu kimlik cihaz kimliği, reklam kimliği veya hesap değildir; seni ya da cihazını tanımlamaz. Ayarlar > Tüm verileri sil ile yenisi üretilir ve eski kimlikle bağ kopar. Kimliğin bu sayfanın en altında yazar.
+Uygulama ilk açılışta rastgele bir kimlik üretir. Bu kimlik cihaz kimliği, reklam kimliği veya hesap değildir; seni ya da cihazını tanımlamaz. Ayarlar > Tüm verileri sil ile yenisi üretilir ve eski kimlikle bağ kopar. Kimliğin uygulamadaki Ayarlar > Gizlilik politikası sayfasının en altında yazar.
 
 ## Kamera ve otomatik okuma
 
@@ -48,7 +48,7 @@ Uygulama genel kitleye yöneliktir ve çocuklardan bilerek veri toplamaz.
 
 ## Haklar (KVKK / GDPR)
 
-Cihazındaki verilere uygulama içinden erişebilir, dışa aktarabilir ve silebilirsin. Sunucudaki kayıtlarının silinmesini istersen bu sayfanın altındaki kimliği aşağıdaki adrese gönder; 30 gün içinde silinir. Veri sorumlusu: Tever Technology.
+Cihazındaki verilere uygulama içinden erişebilir, dışa aktarabilir ve silebilirsin. Sunucudaki kayıtlarının silinmesini istersen uygulamadaki Gizlilik politikası sayfasının altında yazan kimliği aşağıdaki adrese gönder; 30 gün içinde silinir. Veri sorumlusu: Tever Technology.
 
 ## İletişim
 
