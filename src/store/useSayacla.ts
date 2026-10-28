@@ -1,4 +1,5 @@
-// Verim — tek kaynak veri deposu (v2). Sadece ham veri saklanır: okumalar, faturalar, mülkler.
+// Kalıcı depolama anahtarı 'verim-v2' bilinçli olarak eski adla kalır: değişirse kullanıcıların verisi kaybolur.
+// Sayaçla — tek kaynak veri deposu (v2). Sadece ham veri saklanır: okumalar, faturalar, mülkler.
 // Tüketim ve maliyet her zaman motor tarafından türetilir → tarife güncellenince geçmiş de doğru olur.
 
 import { create } from 'zustand';
@@ -97,7 +98,7 @@ const INITIAL = {
   warned: {} as Record<string, string[]>,
 };
 
-export const useVerim = create<State>()(
+export const useSayacla = create<State>()(
   persist(
     (set, get) => ({
       hydrated: false,
@@ -158,7 +159,7 @@ export const useVerim = create<State>()(
       }),
       partialize: ({ hydrated, ...rest }) => rest as any,
       onRehydrateStorage: () => state => {
-        migrateLegacy().finally(() => useVerim.setState({ hydrated: true }));
+        migrateLegacy().finally(() => useSayacla.setState({ hydrated: true }));
         void state;
       },
     },
@@ -168,12 +169,12 @@ export const useVerim = create<State>()(
 // ── Seçiciler ────────────────────────────────────────────────────────────────
 
 export function useActiveProperty(): Property | null {
-  return useVerim(s => s.properties.find(p => p.id === s.activePropertyId) ?? s.properties[0] ?? null);
+  return useSayacla(s => s.properties.find(p => p.id === s.activePropertyId) ?? s.properties[0] ?? null);
 }
 
 let cachedBundle: { key: unknown; value: TariffBundle } | null = null;
 export function useTariffs(): TariffBundle {
-  const remote = useVerim(s => s.remoteTariffs);
+  const remote = useSayacla(s => s.remoteTariffs);
   if (!cachedBundle || cachedBundle.key !== remote) cachedBundle = { key: remote, value: mergeBundle(DEFAULT_BUNDLE, remote) };
   return cachedBundle.value;
 }
@@ -186,7 +187,7 @@ export function readingsFor(readings: Reading[], propertyId: string | undefined,
 
 async function migrateLegacy() {
   try {
-    const s = useVerim.getState();
+    const s = useSayacla.getState();
     if (s.profile.onboarded) return;
     const raw = await AsyncStorage.getItem('verim-utility-store');
     if (!raw) return;
@@ -201,7 +202,7 @@ async function migrateLegacy() {
       .map((l: any) => ({
         id: String(l.id), propertyId: String(l.propertyId), type: l.type, date: l.date, index: l.indexValue, source: 'manual' as const,
       }));
-    useVerim.setState({
+    useSayacla.setState({
       profile: { name: old.profile.name ?? '', householdSize: old.profile.householdSize ?? 3, onboarded: props.length > 0 },
       properties: props,
       activePropertyId: old.activePropertyId ?? props[0]?.id ?? null,

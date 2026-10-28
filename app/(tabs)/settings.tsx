@@ -5,7 +5,7 @@ import Constants from 'expo-constants';
 import { Home, Plus, Receipt, Database, Droplet, Bell, Phone, Shield, Trash2, Download, RefreshCw, Mail } from 'lucide-react-native';
 import { C, FONT, SPACE } from '../../src/theme';
 import { Screen, Header, Card, T, Row, Divider, Stepper, Sheet, Button } from '../../src/ui';
-import { useVerim, useActiveProperty, useTariffs } from '../../src/store/useVerim';
+import { useSayacla, useActiveProperty, useTariffs } from '../../src/store/useSayacla';
 import { syncTariffs } from '../../src/services/tariffSync';
 import { scheduleMonthlyReminder, ensurePermission } from '../../src/services/notify';
 import { dateTR } from '../../src/utils/format';
@@ -13,7 +13,7 @@ import { track } from '../../src/services/analytics';
 
 export default function Settings() {
   const router = useRouter();
-  const st = useVerim();
+  const st = useSayacla();
   const active = useActiveProperty();
   const bundle = useTariffs();
   const [dayOpen, setDayOpen] = useState(false);

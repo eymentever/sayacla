@@ -7,7 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { Camera, Keyboard, Zap, ZapOff, RotateCcw, Check, Info } from 'lucide-react-native';
 import { C, FONT, RADIUS, SPACE, typeColor, typeLabel } from '../../src/theme';
 import { Screen, Header, Card, T, Button, Segmented, Sheet, Row, Badge, tap } from '../../src/ui';
-import { useVerim, useActiveProperty, useTariffs } from '../../src/store/useVerim';
+import { useSayacla, useActiveProperty, useTariffs } from '../../src/store/useSayacla';
 import { UtilityType, Reading } from '../../src/engine/types';
 import { validateNewReading, parseMeterInput, Check as VCheck } from '../../src/engine/validation';
 import { forecastMonth, forecastPeriod, billingPeriod, sortReadings, monthKey } from '../../src/engine/consumption';
@@ -35,11 +35,11 @@ export default function Scan() {
   const focused = useIsFocused();
   const prop = useActiveProperty();
   const bundle = useTariffs();
-  const readings = useVerim(s => s.readings);
-  const bills = useVerim(s => s.bills);
-  const addReading = useVerim(s => s.addReading);
-  const guideSeen = useVerim(s => s.settings.guideSeen);
-  const setSettings = useVerim(s => s.setSettings);
+  const readings = useSayacla(s => s.readings);
+  const bills = useSayacla(s => s.bills);
+  const addReading = useSayacla(s => s.addReading);
+  const guideSeen = useSayacla(s => s.settings.guideSeen);
+  const setSettings = useSayacla(s => s.setSettings);
   const [guide, setGuide] = useState(false);
 
   const types = useMemo<UtilityType[]>(() => {
@@ -159,7 +159,7 @@ export default function Scan() {
         'Tüketimini hesaplamak için birkaç gün sonra tekrar okuman gerekiyor. Ayrıca doğalgaz limitine yaklaştığında seni uyarabiliriz.',
         [{ text: 'Şimdi değil', style: 'cancel', onPress: () => track('reminder_prompt', { accepted: false }) }, { text: 'Hatırlat', onPress: () => {
           track('reminder_prompt', { accepted: true });
-          scheduleMonthlyReminder(useVerim.getState().settings.reminderDay || 1, true).then(() => scheduleSecondReading()).catch(() => {});
+          scheduleMonthlyReminder(useSayacla.getState().settings.reminderDay || 1, true).then(() => scheduleSecondReading()).catch(() => {});
         } }],
       ), 600);
     }

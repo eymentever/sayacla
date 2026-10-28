@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { X } from 'lucide-react-native';
 import { C, FONT, RADIUS, SPACE, typeColor, typeLabel } from '../src/theme';
 import { Screen, T, Field, Button, Segmented, Card, Row, tap } from '../src/ui';
-import { useVerim, useActiveProperty, useTariffs } from '../src/store/useVerim';
+import { useSayacla, useActiveProperty, useTariffs } from '../src/store/useSayacla';
 import { UtilityType } from '../src/engine/types';
 import { calibrate, billFor, inferGasTier } from '../src/engine/bills';
 import { checkBillAgainstReadings } from '../src/engine/insights';
@@ -19,8 +19,8 @@ export default function BillScreen() {
   const params = useLocalSearchParams<{ type?: string }>();
   const prop = useActiveProperty();
   const bundle = useTariffs();
-  const addBill = useVerim(s => s.addBill);
-  const readings = useVerim(s => s.readings);
+  const addBill = useSayacla(s => s.addBill);
+  const readings = useSayacla(s => s.readings);
 
   const types: UtilityType[] = [prop?.hasGas ? 'gas' : null, prop?.hasWater ? 'water' : null].filter(Boolean) as UtilityType[];
   const [type, setType] = useState<UtilityType>((params.type as UtilityType) && types.includes(params.type as UtilityType) ? (params.type as UtilityType) : types[0] ?? 'water');

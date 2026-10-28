@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { C, FONT, RADIUS, SPACE } from '../src/theme';
 import { Screen, T, Button, tap } from '../src/ui';
-import { useVerim, useActiveProperty } from '../src/store/useVerim';
+import { useSayacla, useActiveProperty } from '../src/store/useSayacla';
 import { HomeProfile } from '../src/engine/diagnosis';
 import { track } from '../src/services/analytics';
 
@@ -27,7 +27,7 @@ const QUESTIONS: Q<any>[] = [
 export default function Diagnose() {
   const router = useRouter();
   const prop = useActiveProperty();
-  const update = useVerim(s => s.updateProperty);
+  const update = useSayacla(s => s.updateProperty);
   const [a, setA] = useState<Partial<HomeProfile>>(prop?.home ?? {});
   if (!prop) return null;
   const done = QUESTIONS.every(q => a[q.key as keyof HomeProfile] !== undefined);

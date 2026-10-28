@@ -8,7 +8,7 @@ import {
 import { C, FONT, RADIUS, SPACE, typeColor, typeLabel } from '../../src/theme';
 import { Screen, Header, Card, T, Badge, Progress, Button, Empty, Sheet, Row, tap } from '../../src/ui';
 import { useDashboard } from '../../src/hooks/useDashboard';
-import { useVerim, useTariffs } from '../../src/store/useVerim';
+import { useSayacla, useTariffs } from '../../src/store/useSayacla';
 import { TypeSummary, Tip, latestCalibration } from '../../src/engine/summary';
 import { Insight } from '../../src/engine/insights';
 import { gasLimit, billFor, gasBillRaw, periodGasLimit } from '../../src/engine/bills';
@@ -25,15 +25,15 @@ import { Shield } from 'lucide-react-native';
 export default function Dashboard() {
   const router = useRouter();
   const d = useDashboard();
-  const profile = useVerim(s => s.profile);
-  const properties = useVerim(s => s.properties);
-  const setActive = useVerim(s => s.setActiveProperty);
-  const readings = useVerim(s => s.readings);
-  const tierAlerts = useVerim(s => s.settings.tierAlerts);
-  const weeklyHeating = useVerim(s => s.settings.weeklyHeating);
-  const warned = useVerim(s => s.warned);
-  const markWarned = useVerim(s => s.markWarned);
-  const bills = useVerim(s => s.bills);
+  const profile = useSayacla(s => s.profile);
+  const properties = useSayacla(s => s.properties);
+  const setActive = useSayacla(s => s.setActiveProperty);
+  const readings = useSayacla(s => s.readings);
+  const tierAlerts = useSayacla(s => s.settings.tierAlerts);
+  const weeklyHeating = useSayacla(s => s.settings.weeklyHeating);
+  const warned = useSayacla(s => s.warned);
+  const markWarned = useSayacla(s => s.markWarned);
+  const bills = useSayacla(s => s.bills);
   const [switcher, setSwitcher] = useState(false);
   const [allTips, setAllTips] = useState(false);
 
@@ -249,7 +249,7 @@ function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
 }) {
   const [explain, setExplain] = useState(false);
   const router = useRouter();
-  const activeProp = useVerim(st => st.properties.find(p => p.id === st.activePropertyId));
+  const activeProp = useSayacla(st => st.properties.find(p => p.id === st.activePropertyId));
   const color = typeColor(x.type);
   const Icon = x.type === 'water' ? Droplet : Flame;
   const last = [...readings].sort((a, b) => b.date.localeCompare(a.date))[0];
@@ -261,8 +261,8 @@ function TypeCard({ s: x, province, bundle, readings, info, onScan }: {
     ? `${period.start.getDate()} ${monthName(monthKey(period.start), false).slice(0, 3)} – ${new Date(period.end.getTime() - 86_400_000).getDate()} ${monthName(monthKey(new Date(period.end.getTime() - 86_400_000)), false).slice(0, 3)}`
     : monthName(month, false);
   const b = x.projectedBill;
-  const allBills = useVerim(st => st.bills);
-  const activeId = useVerim(st => st.activePropertyId);
+  const allBills = useSayacla(st => st.bills);
+  const activeId = useSayacla(st => st.activePropertyId);
   const cal = latestCalibration(allBills.filter(bb => bb.propertyId === activeId), x.type, bundle, province);
 
   return (
@@ -359,7 +359,7 @@ function gasPerM3(bundle: any, province: string, month: string, tier: 1 | 2) {
 }
 
 function CentralGasCard({ province, propertyId, onAdd }: { province: string; propertyId: string; onAdd: () => void }) {
-  const allBills = useVerim(s => s.bills);
+  const allBills = useSayacla(s => s.bills);
   const bundle = useTariffs();
   const last = allBills.filter(b => b.propertyId === propertyId && b.type === 'gas').sort((a, b) => b.month.localeCompare(a.month))[0];
   const lim = last ? gasLimit(bundle, province, last.month) : null;

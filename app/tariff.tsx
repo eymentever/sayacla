@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { C, FONT, SPACE } from '../src/theme';
 import { Screen, T, Card, Row, Badge, Divider } from '../src/ui';
-import { useActiveProperty, useTariffs } from '../src/store/useVerim';
+import { useActiveProperty, useTariffs } from '../src/store/useSayacla';
 import { monthKey } from '../src/engine/consumption';
 import { monthShort } from '../src/utils/format';
 

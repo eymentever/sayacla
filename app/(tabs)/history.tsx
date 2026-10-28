@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { Trash2, Receipt, ScanLine } from 'lucide-react-native';
 import { C, FONT, SPACE, typeColor, typeLabel } from '../../src/theme';
 import { Screen, Header, Card, T, Segmented, Empty, Button, Badge, tap } from '../../src/ui';
-import { useVerim, useActiveProperty, useTariffs } from '../../src/store/useVerim';
+import { useSayacla, useActiveProperty, useTariffs } from '../../src/store/useSayacla';
 import { UtilityType } from '../../src/engine/types';
 import { buildIntervals, monthlyUsage, monthKey, sortReadings } from '../../src/engine/consumption';
 import { billFor } from '../../src/engine/bills';
@@ -20,10 +20,10 @@ export default function History() {
   const router = useRouter();
   const prop = useActiveProperty();
   const bundle = useTariffs();
-  const readings = useVerim(s => s.readings);
-  const bills = useVerim(s => s.bills);
-  const removeReading = useVerim(s => s.removeReading);
-  const removeBill = useVerim(s => s.removeBill);
+  const readings = useSayacla(s => s.readings);
+  const bills = useSayacla(s => s.bills);
+  const removeReading = useSayacla(s => s.removeReading);
+  const removeBill = useSayacla(s => s.removeBill);
 
   const types: UtilityType[] = [prop?.hasGas ? 'gas' : null, prop?.hasWater ? 'water' : null].filter(Boolean) as UtilityType[];
   const [type, setType] = useState<UtilityType>(types[0] ?? 'water');

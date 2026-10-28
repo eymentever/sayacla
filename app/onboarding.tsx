@@ -6,7 +6,7 @@ import { C, FONT, RADIUS, SPACE } from '../src/theme';
 import { Screen, Button, Picker, Stepper, Field, T, tap } from '../src/ui';
 import { PROVINCES } from '../src/data/provinces';
 import { ALL_PROVINCES } from '../src/engine/tariffs';
-import { useVerim } from '../src/store/useVerim';
+import { useSayacla } from '../src/store/useSayacla';
 import { track } from '../src/services/analytics';
 import { ContributeInfo } from '../src/ui/Contribute';
 
@@ -14,7 +14,7 @@ type GasChoice = 'meter' | 'central' | 'none';
 
 export default function Onboarding() {
   const router = useRouter();
-  const complete = useVerim(s => s.completeOnboarding);
+  const complete = useSayacla(s => s.completeOnboarding);
   const [step, setStep] = useState(0);
   const [province, setProvince] = useState('');
   const [district, setDistrict] = useState('');
@@ -24,7 +24,7 @@ export default function Onboarding() {
   const [name, setName] = useState('');
 
   const finish = (contribute: boolean) => {
-    useVerim.getState().setSettings({ contribute });
+    useSayacla.getState().setSettings({ contribute });
     complete({
       name, householdSize: household,
       property: {

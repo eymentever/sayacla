@@ -55,8 +55,8 @@ Tahminler bilgilendirme amaçlıdır; kesin tutar dağıtım şirketinin / beled
 ## 5. URL’ler
 | Alan | Değer |
 |---|---|
-| Gizlilik politikası URL | https://eymentever.github.io/verim/privacy.html (yayında) |
-| Destek URL | https://github.com/eymentever/verim/blob/main/docs/privacy.md (veya teverorman.com iletişim sayfası) |
+| Gizlilik politikası URL | https://eymentever.github.io/sayacla/privacy.html (yayında) |
+| Destek URL | https://github.com/eymentever/sayacla/blob/main/docs/privacy.md (veya teverorman.com iletişim sayfası) |
 | Destek e-postası | m.eymen@teverorman.com |
 
 ## 6. App Privacy (Gizlilik etiketleri)
@@ -75,7 +75,7 @@ Sayaçla requires no account. To test:
 3) Enter a second reading, e.g. 1012 → Kaydet. The Özet tab now shows the monthly bill
    estimate, natural-gas tier (kademe) status and savings tips.
 Camera OCR runs fully on-device (Google ML Kit). No login, no in-app purchases, no tracking.
-Tariff data is fetched from https://raw.githubusercontent.com/eymentever/verim/main/tariffs/tariffs.json
+Tariff data is fetched from https://raw.githubusercontent.com/eymentever/sayacla/main/tariffs/tariffs.json
 ```
 
 ## 8. Ekran görüntüleri

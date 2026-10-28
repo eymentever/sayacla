@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useVerim, useActiveProperty, useTariffs } from '../store/useVerim';
+import { useSayacla, useActiveProperty, useTariffs } from '../store/useSayacla';
 import { summarize, savingsTips, latestCalibration } from '../engine/summary';
 import { allInsights } from '../engine/insights';
 import { billingPeriod } from '../engine/consumption';
@@ -8,9 +8,9 @@ import { billingPeriod } from '../engine/consumption';
 export function useDashboard(now = new Date()) {
   const prop = useActiveProperty();
   const bundle = useTariffs();
-  const readings = useVerim(s => s.readings);
-  const bills = useVerim(s => s.bills);
-  const household = useVerim(s => s.profile.householdSize);
+  const readings = useSayacla(s => s.readings);
+  const bills = useSayacla(s => s.bills);
+  const household = useSayacla(s => s.profile.householdSize);
   const dayKey = now.toISOString().slice(0, 10);
 
   return useMemo(() => {

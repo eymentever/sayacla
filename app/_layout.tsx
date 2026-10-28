@@ -7,7 +7,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { C } from '../src/theme';
-import { useVerim } from '../src/store/useVerim';
+import { useSayacla } from '../src/store/useSayacla';
 import { syncTariffs } from '../src/services/tariffSync';
 import { setupChannels, onNotificationTap, scheduleMonthlyReminder } from '../src/services/notify';
 import { trackDailyOpen, track, flush } from '../src/services/analytics';
@@ -15,16 +15,16 @@ import { trackDailyOpen, track, flush } from '../src/services/analytics';
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function Root() {
-  const hydrated = useVerim(s => s.hydrated);
-  const onboarded = useVerim(s => s.profile.onboarded);
-  const reminderDay = useVerim(s => s.settings.reminderDay);
+  const hydrated = useSayacla(s => s.hydrated);
+  const onboarded = useSayacla(s => s.profile.onboarded);
+  const reminderDay = useSayacla(s => s.settings.reminderDay);
   const router = useRouter();
 
   useEffect(() => {
     setupChannels().catch(() => {});
     const sub = onNotificationTap(route => { track('notif_open', { route }); router.push(route as any); });
     const app = AppState.addEventListener('change', s => {
-      if (s === 'active' && useVerim.getState().hydrated) trackDailyOpen().catch(() => {});
+      if (s === 'active' && useSayacla.getState().hydrated) trackDailyOpen().catch(() => {});
       if (s === 'background') flush().catch(() => {});
     });
     return () => { sub.remove(); app.remove(); };

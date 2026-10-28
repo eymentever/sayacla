@@ -4,14 +4,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { C, FONT, SPACE } from '../src/theme';
 import { Screen, T, Field, Button, Picker, Segmented, Card } from '../src/ui';
-import { useVerim } from '../src/store/useVerim';
+import { useSayacla } from '../src/store/useSayacla';
 import { PROVINCES } from '../src/data/provinces';
 import { ALL_PROVINCES } from '../src/engine/tariffs';
 
 export default function PropertyScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id?: string }>();
-  const st = useVerim();
+  const st = useSayacla();
   const existing = st.properties.find(p => p.id === id);
   const [name, setName] = useState(existing?.name ?? (st.properties.length ? 'Yeni ev' : 'Evim'));
   const [province, setProvince] = useState(existing?.province ?? '');

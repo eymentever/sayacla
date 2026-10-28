@@ -137,7 +137,7 @@ export function allInsights(
   return (out.filter(Boolean) as Insight[]).sort((a, b) => order[a.level] - order[b.level]);
 }
 
-// ── Verim ile korunan para ───────────────────────────────────────────────────
+// ── Sayaçla ile korunan para ───────────────────────────────────────────────────
 
 export interface ProtectedMonth { month: string; m3: number; limit: number; savedTL: number }
 

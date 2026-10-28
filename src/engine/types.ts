@@ -1,4 +1,4 @@
-// Verim hesap motoru — ortak tipler. Saf TypeScript; React/Expo import etmez.
+// Sayaçla hesap motoru — ortak tipler. Saf TypeScript; React/Expo import etmez.
 
 export type UtilityType = 'water' | 'gas';
 

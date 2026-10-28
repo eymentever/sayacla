@@ -5,11 +5,11 @@ import { X } from 'lucide-react-native';
 import { C, FONT, SPACE } from '../src/theme';
 import { Screen, T } from '../src/ui';
 import { PRIVACY_SECTIONS, PRIVACY_UPDATED } from '../src/data/privacy';
-import { useVerim } from '../src/store/useVerim';
+import { useSayacla } from '../src/store/useSayacla';
 
 export default function Privacy() {
   const router = useRouter();
-  const installId = useVerim(s => s.installId);
+  const installId = useSayacla(s => s.installId);
   return (
     <Screen tabs={false}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: SPACE.lg }}>

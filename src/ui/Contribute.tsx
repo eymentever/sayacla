@@ -4,7 +4,7 @@ import { View, StyleSheet } from 'react-native';
 import { BarChart3, Check, X } from 'lucide-react-native';
 import { C, SPACE } from '../theme';
 import { T, Card, Button } from './index';
-import { useVerim } from '../store/useVerim';
+import { useSayacla } from '../store/useSayacla';
 import { track } from '../services/analytics';
 
 export function ContributeInfo() {
@@ -38,8 +38,8 @@ function Line({ ok, text }: { ok?: boolean; text: string }) {
 
 /** Kurulumu önceki sürümde yapmış kullanıcılar için bir kerelik soru (Özet ekranı). */
 export function ContributeCard() {
-  const contribute = useVerim(s => s.settings.contribute);
-  const setSettings = useVerim(s => s.setSettings);
+  const contribute = useSayacla(s => s.settings.contribute);
+  const setSettings = useSayacla(s => s.setSettings);
   if (contribute !== null) return null;
   const choose = (v: boolean) => { setSettings({ contribute: v }); track('consent', { contribute: v, where: 'home' }); };
   return (

@@ -1,5 +1,5 @@
 /**
- * Verim — tasarım sistemi. Koyu, endüstriyel, yüksek kontrast. Tüm ekranlar buradan import eder.
+ * Sayaçla — tasarım sistemi. Koyu, endüstriyel, yüksek kontrast. Tüm ekranlar buradan import eder.
  */
 
 export const C = {

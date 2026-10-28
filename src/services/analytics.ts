@@ -5,7 +5,7 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useVerim } from '../store/useVerim';
+import { useSayacla } from '../store/useSayacla';
 import { Reading, UtilityType } from '../engine/types';
 
 const BASE = 'https://lqruvibidinnuqmbgeno.supabase.co/rest/v1/';
@@ -80,7 +80,7 @@ export async function flush() {
 
 /** Anonim kullanım olayı (Ayarlar'dan kapatılabilir). */
 export function track(name: string, props: Record<string, string | number | boolean | null | undefined> = {}) {
-  const st = useVerim.getState();
+  const st = useSayacla.getState();
   if (!st.settings.analytics) return;
   const clean: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(props)) if (v !== undefined) clean[k] = v;
@@ -88,7 +88,7 @@ export function track(name: string, props: Record<string, string | number | bool
 }
 
 function propertyContext(propertyId: string) {
-  const st = useVerim.getState();
+  const st = useSayacla.getState();
   const p = st.properties.find(x => x.id === propertyId);
   if (!p) return null;
   return {
@@ -101,7 +101,7 @@ function propertyContext(propertyId: string) {
 
 /** Yeni okuma kaydedilince: olay + (izin varsa) önceki okumayla aradaki tüketim. */
 export function onReadingSaved(r: Omit<Reading, 'id'>) {
-  const st = useVerim.getState();
+  const st = useSayacla.getState();
   const same = st.readings.filter(x => x.propertyId === r.propertyId && x.type === r.type).sort((a, b) => a.date.localeCompare(b.date));
   track('reading_saved', { type: r.type, source: r.source, nth: same.length, reset: !!r.meterReset });
   if (st.settings.contribute !== true || r.meterReset) return;
@@ -118,7 +118,7 @@ export function onReadingSaved(r: Omit<Reading, 'id'>) {
 
 /** Fatura kaydedilince: olay + (izin varsa) aylık tüketim ve tutar. */
 export function onBillSaved(b: { propertyId: string; type: UtilityType; month: string; m3: number; amount: number }) {
-  const st = useVerim.getState();
+  const st = useSayacla.getState();
   track('bill_saved', { type: b.type });
   if (st.settings.contribute !== true) return;
   const ctx = propertyContext(b.propertyId);
@@ -131,7 +131,7 @@ export function onBillSaved(b: { propertyId: string; type: UtilityType; month: s
 
 /** Günde bir kez "uygulama açıldı" — elde tutma (D1/D7/D30) ölçümü için. */
 export async function trackDailyOpen() {
-  const st = useVerim.getState();
+  const st = useSayacla.getState();
   if (!st.profile.onboarded) return;
   const today = new Date().toISOString().slice(0, 10);
   try {

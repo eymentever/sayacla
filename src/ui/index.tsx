@@ -1,4 +1,4 @@
-// Verim UI kiti — tüm ekranlar bu bileşenlerle kurulur; tutarlı boşluk, tipografi, dokunma alanı (≥44pt).
+// Sayaçla UI kiti — tüm ekranlar bu bileşenlerle kurulur; tutarlı boşluk, tipografi, dokunma alanı (≥44pt).
 
 import React, { useMemo, useState } from 'react';
 import {
