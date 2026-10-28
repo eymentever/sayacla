@@ -21,7 +21,7 @@ src/engine/              Saf hesap motoru (React'siz, test edilir)
   validation.ts          Okuma doğrulama + Türkçe sayı ayrıştırma
   ocrPick.ts             OCR çıktısından sayaç endeksini seçme
 src/data/                BOTAŞ 2026 limitleri (81 il × 12 ay), 81 il / 973 ilçe, gizlilik metni
-src/store/useVerim.ts    Zustand + AsyncStorage — sadece ham veri (okuma, fatura, ev)
+src/store/useSayacla.ts  Zustand + AsyncStorage — sadece ham veri (okuma, fatura, ev)
 tariffs/tariffs.json     Uzak tarife paketi (uygulama günlük çeker)
 docs/                    Gizlilik politikası, App Store paketi ve ekran görüntüleri
 tests/                   Motor birim testleri
